@@ -2351,6 +2351,7 @@ class CourseRun(ManageHistoryMixin, DraftModelMixin, CachedMixin, TimeStampedMod
         default=False,
         help_text=_('This calculated field signifies if this course run is in the enterprise subscription catalog'),
     )
+    invite_only = models.BooleanField(default=False)
 
     variant_id = models.UUIDField(
         blank=True, null=True, editable=True,

@@ -271,6 +271,7 @@ class CoursesApiDataLoader(AbstractDataLoader):
             'enrollment_start': self.parse_date(body['enrollment_start']),
             'enrollment_end': self.parse_date(body['enrollment_end']),
             'hidden': body.get('hidden', False),
+            'invite_only': body.get('invitation_only', False),
             'license': body.get('license') or '',  # license cannot be None
             'title_override': body['name'],  # we support Studio edits, even though Publisher also owns titles
             'pacing_type': self.get_pacing_type(body)
