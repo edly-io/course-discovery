@@ -43,6 +43,7 @@ class CourseRunViewSet(viewsets.ModelViewSet):
         """
         q = self.request.query_params.get('q')
         partner = self.request.site.partner
+        organization = self.request.query_params.get('organization')
 
         if q:
             qs = SearchQuerySetWrapper(CourseRun.search(q).filter(partner=partner.short_code))
@@ -51,7 +52,7 @@ class CourseRunViewSet(viewsets.ModelViewSet):
             return qs
         else:
             queryset = super(CourseRunViewSet, self).get_queryset().filter(course__partner=partner)
-            return self.get_serializer_class().prefetch_queryset(queryset=queryset)
+            return self.get_serializer_class().prefetch_queryset(queryset=queryset, organization=organization)
 
     def get_serializer_context(self, *args, **kwargs):
         context = super().get_serializer_context(*args, **kwargs)
@@ -122,6 +123,12 @@ class CourseRunViewSet(viewsets.ModelViewSet):
               description: Will include retired programs in the associated programs array
               required: false
               type: integer
+              paramType: query
+              multiple: false
+            - name: organization
+              description: Filter course runs by sub organizations or edx organization.
+              required: false
+              type: string
               paramType: query
               multiple: false
         """

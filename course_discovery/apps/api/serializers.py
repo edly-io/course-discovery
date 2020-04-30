@@ -631,8 +631,9 @@ class CourseRunWithProgramsSerializer(CourseRunSerializer):
     programs = serializers.SerializerMethodField()
 
     @classmethod
-    def prefetch_queryset(cls, queryset=None):
+    def prefetch_queryset(cls, queryset=None, organization=None):
         queryset = super().prefetch_queryset(queryset=queryset)
+        queryset = queryset if not organization else queryset.filter(course__authoring_organizations__key=organization)
 
         return queryset.prefetch_related('course__programs__excluded_course_runs')
 
