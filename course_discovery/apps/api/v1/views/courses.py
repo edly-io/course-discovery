@@ -52,6 +52,7 @@ class CourseViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         partner = self.request.site.partner
         q = self.request.query_params.get('q')
+        organization = self.request.query_params.get('organization')
 
         if q:
             queryset = Course.search(q)
@@ -73,6 +74,7 @@ class CourseViewSet(viewsets.ReadOnlyModelViewSet):
 
             queryset = self.get_serializer_class().prefetch_queryset(
                 queryset=self.queryset,
+                organization=organization,
                 course_runs=course_runs,
                 partner=partner
             )
@@ -106,6 +108,12 @@ class CourseViewSet(viewsets.ReadOnlyModelViewSet):
               multiple: false
             - name: keys
               description: Filter by keys (comma-separated list)
+              required: false
+              type: string
+              paramType: query
+              multiple: false
+            - name: organization
+              description: Filter course by sub organizations or edx organization.
               required: false
               type: string
               paramType: query

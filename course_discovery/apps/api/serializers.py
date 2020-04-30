@@ -752,12 +752,13 @@ class CourseWithProgramsSerializer(CourseSerializer):
     programs = serializers.SerializerMethodField()
 
     @classmethod
-    def prefetch_queryset(cls, partner, queryset=None, course_runs=None):
+    def prefetch_queryset(cls, partner, organization=None, queryset=None, course_runs=None):
         """
         Similar to the CourseSerializer's prefetch_queryset, but prefetches a
         filtered CourseRun queryset.
         """
         queryset = queryset if queryset is not None else Course.objects.filter(partner=partner)
+        queryset = queryset if not organization else queryset.filter(authoring_organizations__key=organization)
 
         return queryset.select_related('level_type', 'video', 'partner').prefetch_related(
             'expected_learning_items',
