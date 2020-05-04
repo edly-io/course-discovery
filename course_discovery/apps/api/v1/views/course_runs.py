@@ -13,6 +13,8 @@ from course_discovery.apps.core.utils import SearchQuerySetWrapper
 from course_discovery.apps.course_metadata.constants import COURSE_RUN_ID_REGEX
 from course_discovery.apps.course_metadata.models import CourseRun
 
+from course_discovery.apps.api.edly_utils import get_edly_sub_organization
+
 
 # pylint: disable=no-member
 class CourseRunViewSet(viewsets.ModelViewSet):
@@ -43,7 +45,7 @@ class CourseRunViewSet(viewsets.ModelViewSet):
         """
         q = self.request.query_params.get('q')
         partner = self.request.site.partner
-        organization = self.request.query_params.get('organization')
+        edly_sub_org = get_edly_sub_organization(self.request)
 
         if q:
             qs = SearchQuerySetWrapper(CourseRun.search(q).filter(partner=partner.short_code))
@@ -52,7 +54,7 @@ class CourseRunViewSet(viewsets.ModelViewSet):
             return qs
         else:
             queryset = super(CourseRunViewSet, self).get_queryset().filter(course__partner=partner)
-            return self.get_serializer_class().prefetch_queryset(queryset=queryset, organization=organization)
+            return self.get_serializer_class().prefetch_queryset(queryset=queryset, edly_sub_org=edly_sub_org)
 
     def get_serializer_context(self, *args, **kwargs):
         context = super().get_serializer_context(*args, **kwargs)
@@ -125,12 +127,6 @@ class CourseRunViewSet(viewsets.ModelViewSet):
               type: integer
               paramType: query
               multiple: false
-            - name: organization
-              description: Filter course runs by sub organizations or edx organization.
-              required: false
-              type: string
-              paramType: query
-              multiple: false
         """
         return super(CourseRunViewSet, self).list(request, *args, **kwargs)
 
@@ -174,11 +170,12 @@ class CourseRunViewSet(viewsets.ModelViewSet):
         query = request.GET.get('query')
         course_run_ids = request.GET.get('course_run_ids')
         partner = self.request.site.partner
+        edly_sub_org = get_edly_sub_organization(self.request)
 
         if query and course_run_ids:
             course_run_ids = course_run_ids.split(',')
             course_runs = CourseRun.search(query).filter(partner=partner.short_code).filter(key__in=course_run_ids). \
-                values_list('key', flat=True)
+                filter(course__authoring_organizations__key=edly_sub_org).values_list('key', flat=True)
             contains = {course_run_id: course_run_id in course_runs for course_run_id in course_run_ids}
 
             instance = {'course_runs': contains}
