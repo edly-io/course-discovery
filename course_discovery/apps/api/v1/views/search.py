@@ -17,6 +17,8 @@ from course_discovery.apps.api import filters, mixins, serializers
 from course_discovery.apps.course_metadata.choices import ProgramStatus
 from course_discovery.apps.course_metadata.models import Course, CourseRun, Person, Program
 
+from course_discovery.apps.api.edly_utils import get_edly_sub_organization
+
 
 class BaseHaystackViewSet(mixins.DetailMixin, FacetMixin, HaystackViewSet):
     document_uid_field = 'key'
@@ -26,6 +28,11 @@ class BaseHaystackViewSet(mixins.DetailMixin, FacetMixin, HaystackViewSet):
     load_all = True
     lookup_field = 'key'
     permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        queryset = super(BaseHaystackViewSet, self).get_queryset()
+        edly_sub_org = get_edly_sub_organization(self.request)
+        return queryset.filter(org=edly_sub_org) if edly_sub_org else queryset
 
     def list(self, request, *args, **kwargs):
         """
