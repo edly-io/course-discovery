@@ -1419,6 +1419,7 @@ class CourseSearchSerializer(HaystackSerializer):
             'course_runs',
             'uuid',
             'subjects',
+            'org',
         )
 
 
