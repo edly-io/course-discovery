@@ -54,7 +54,8 @@ class CourseViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         partner = self.request.site.partner
         q = self.request.query_params.get('q')
-        edly_sub_org = get_edly_sub_organization(self.request)
+        edly_sub_org = request.GET.get('edly_sub_org')
+        edly_sub_org = get_edly_sub_organization(self.request) or edly_sub_org
 
         if q:
             queryset = Course.search(q)
@@ -142,6 +143,12 @@ class CourseViewSet(viewsets.ReadOnlyModelViewSet):
               mulitple: false
             - name: q
               description: Elasticsearch querystring query. This filter takes precedence over other filters.
+              required: false
+              type: string
+              paramType: query
+              multiple: false
+            - name: edly_sub_org
+              description: Filter on edly sub organization or edx organization
               required: false
               type: string
               paramType: query

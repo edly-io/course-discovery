@@ -45,7 +45,8 @@ class CourseRunViewSet(viewsets.ModelViewSet):
         """
         q = self.request.query_params.get('q')
         partner = self.request.site.partner
-        edly_sub_org = get_edly_sub_organization(self.request)
+        edly_sub_org = self.request.query_params.get('edly_sub_org')
+        edly_sub_org = get_edly_sub_organization(self.request) or edly_sub_org
 
         if q:
             qs = SearchQuerySetWrapper(CourseRun.search(q).filter(partner=partner.short_code))
@@ -127,6 +128,12 @@ class CourseRunViewSet(viewsets.ModelViewSet):
               type: integer
               paramType: query
               multiple: false
+            - name: edly_sub_org
+              description: Filter on edly sub organization or edx organization
+              required: false
+              type: string
+              paramType: query
+              multiple: false
         """
         return super(CourseRunViewSet, self).list(request, *args, **kwargs)
 
@@ -166,11 +173,18 @@ class CourseRunViewSet(viewsets.ModelViewSet):
               type: string
               paramType: query
               multiple: false
+            - name: edly_sub_org
+              description: Filter on edly sub organization or edx organization
+              required: false
+              type: string
+              paramType: query
+              multiple: false
         """
         query = request.GET.get('query')
         course_run_ids = request.GET.get('course_run_ids')
         partner = self.request.site.partner
-        edly_sub_org = get_edly_sub_organization(self.request)
+        edly_sub_org = request.GET.get('edly_sub_org')
+        edly_sub_org = get_edly_sub_organization(self.request) or edly_sub_org
 
         if query and course_run_ids:
             course_run_ids = course_run_ids.split(',')
