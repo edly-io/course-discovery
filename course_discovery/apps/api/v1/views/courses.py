@@ -52,7 +52,7 @@ class CourseViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         partner = self.request.site.partner
         q = self.request.query_params.get('q')
-        edly_sub_org = request.GET.get('edly_sub_org')
+        edly_sub_org = self.request.query_params.get('edly_sub_org')
 
         if q:
             queryset = Course.search(q)
