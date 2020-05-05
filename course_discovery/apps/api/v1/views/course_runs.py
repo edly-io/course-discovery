@@ -46,7 +46,6 @@ class CourseRunViewSet(viewsets.ModelViewSet):
         q = self.request.query_params.get('q')
         partner = self.request.site.partner
         edly_sub_org = self.request.query_params.get('edly_sub_org')
-        edly_sub_org = get_edly_sub_organization(self.request) or edly_sub_org
 
         if q:
             qs = SearchQuerySetWrapper(CourseRun.search(q).filter(partner=partner.short_code))
@@ -184,7 +183,6 @@ class CourseRunViewSet(viewsets.ModelViewSet):
         course_run_ids = request.GET.get('course_run_ids')
         partner = self.request.site.partner
         edly_sub_org = request.GET.get('edly_sub_org')
-        edly_sub_org = get_edly_sub_organization(self.request) or edly_sub_org
 
         if query and course_run_ids:
             course_run_ids = course_run_ids.split(',')
