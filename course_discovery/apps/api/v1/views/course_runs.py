@@ -13,8 +13,6 @@ from course_discovery.apps.core.utils import SearchQuerySetWrapper
 from course_discovery.apps.course_metadata.constants import COURSE_RUN_ID_REGEX
 from course_discovery.apps.course_metadata.models import CourseRun
 
-from course_discovery.apps.api.edly_utils import get_edly_sub_organization
-
 
 # pylint: disable=no-member
 class CourseRunViewSet(viewsets.ModelViewSet):

@@ -13,8 +13,6 @@ from course_discovery.apps.course_metadata.choices import CourseRunStatus
 from course_discovery.apps.course_metadata.constants import COURSE_ID_REGEX, COURSE_UUID_REGEX
 from course_discovery.apps.course_metadata.models import Course, CourseRun
 
-from course_discovery.apps.api.edly_utils import get_edly_sub_organization
-
 
 # pylint: disable=no-member
 class CourseViewSet(viewsets.ReadOnlyModelViewSet):
