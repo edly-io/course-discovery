@@ -442,7 +442,7 @@ class EcommerceApiDataLoader(AbstractDataLoader):
             self.processing_failure_occurred = True
 
     def _request_course_runs(self, page):
-        return self.api_client.courses().get(page=page, page_size=self.PAGE_SIZE, include_products=True)
+        return self.api_client.courses().get(page=page, page_size=self.PAGE_SIZE, include_products=True, include_all_partners=True)
 
     def _request_entitlments(self, page):
         return self.api_client.products().get(page=page, page_size=self.PAGE_SIZE, product_class='Course Entitlement')
