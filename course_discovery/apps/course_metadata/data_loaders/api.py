@@ -22,7 +22,6 @@ from course_discovery.apps.course_metadata.models import (
     Course, CourseEntitlement, CourseRun, CourseRunType, CourseType, Organization, Program, ProgramType, Seat, SeatType,
     Video
 )
-from course_discovery.apps.publisher.constants import ENABLE_EDLY_MARKETING_SITE_SWITCH, PUBLISHER_ENABLE_READ_ONLY_FIELDS
 from course_discovery.apps.course_metadata.utils import push_to_ecommerce_for_course_run, subtract_deadline_delta
 
 logger = logging.getLogger(__name__)
