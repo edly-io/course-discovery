@@ -12,9 +12,9 @@ from bs4 import BeautifulSoup
 from django.conf import settings
 from django.db import transaction
 from django.utils.functional import cached_property
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from dynamic_filenames import FilePattern
-from django.utils.text import slugify
 from stdimage.models import StdImageFieldFile
 
 from course_discovery.apps.core.models import SalesforceConfiguration
@@ -333,7 +333,7 @@ def custom_render_variations(file_name, variations, storage, replace=True):
 
 def uslugify(s):
     """Slugifies a string, while handling unicode"""
-    slug = slugify(string, allow_unicode=True)
+    slug = slugify(s, allow_unicode=True)
     return slug
 
 

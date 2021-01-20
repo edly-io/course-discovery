@@ -18,7 +18,7 @@ from drf_dynamic_fields import DynamicFieldsMixin
 from drf_haystack.serializers import HaystackFacetSerializer, HaystackSerializer, HaystackSerializerMixin
 from opaque_keys.edx.locator import CourseLocator
 from rest_framework import serializers
-from rest_framework.fields import CreateOnlyDefault, DictField, UUIDField, IntegerField, CharField
+from rest_framework.fields import CharField, CreateOnlyDefault, DictField, IntegerField, UUIDField
 from rest_framework.metadata import SimpleMetadata
 from rest_framework.relations import ManyRelatedField
 from rest_framework.utils.field_mapping import get_field_kwargs
@@ -27,7 +27,7 @@ from taggit_serializer.serializers import TaggitSerializer, TagListSerializerFie
 from course_discovery.apps.api.fields import (
     HtmlField, ImageField, SlugRelatedFieldWithReadSerializer, SlugRelatedTranslatableField, StdImageSerializerField
 )
-from course_discovery.apps.api.utils import StudioAPI
+from course_discovery.apps.api.utils import StudioAPI, get_queryset_filtered_on_organization
 from course_discovery.apps.catalogs.models import Catalog
 from course_discovery.apps.core.api_client.lms import LMSAPIClient
 from course_discovery.apps.course_metadata import search_indexes
@@ -43,8 +43,6 @@ from course_discovery.apps.course_metadata.models import (
 from course_discovery.apps.course_metadata.utils import get_course_run_estimated_hours, parse_course_key_fragment
 from course_discovery.apps.ietf_language_tags.models import LanguageTag
 from course_discovery.apps.publisher.api.serializers import GroupUserSerializer
-
-from course_discovery.apps.api.utils import get_queryset_filtered_on_organization
 
 User = get_user_model()
 
@@ -884,7 +882,7 @@ class CourseRunSerializer(MinimalCourseRunSerializer):
             'level_type', 'availability', 'mobile_available', 'hidden', 'reporting_type', 'eligible_for_financial_aid',
             'first_enrollable_paid_seat_price', 'has_ofac_restrictions', 'ofac_comment',
             'enrollment_count', 'recent_enrollment_count', 'expected_program_type', 'expected_program_name',
-            'course_uuid', 'estimated_hours',
+            'course_uuid', 'estimated_hours', 'invite_only',
         )
         read_only_fields = ('enrollment_count', 'recent_enrollment_count',)
 

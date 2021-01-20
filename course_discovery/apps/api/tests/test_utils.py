@@ -11,6 +11,7 @@ from rest_framework.test import APIRequestFactory
 
 from course_discovery.apps.api.utils import StudioAPI, cast2int, get_query_param, get_queryset_filtered_on_organization
 from course_discovery.apps.core.utils import serialize_datetime
+from course_discovery.apps.course_metadata.models import Course, CourseRun
 from course_discovery.apps.course_metadata.tests.factories import CourseEditorFactory, CourseRunFactory
 
 LOGGER_PATH = 'course_discovery.apps.api.utils.logger.exception'
@@ -74,6 +75,8 @@ class TestGetQuerysetFilteredOnOrganization:
         actual_courses_queryset = get_queryset_filtered_on_organization(courses_queryset, edx_org_filter, edx_org_short_name)
 
         assert len(actual_courses_queryset) == len(expected_courses_queryset)
+
+
 @ddt.ddt
 class StudioAPITests(TestCase):
     def setUp(self):
