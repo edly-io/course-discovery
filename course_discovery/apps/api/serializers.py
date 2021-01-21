@@ -1116,7 +1116,7 @@ class CourseWithProgramsSerializer(CourseSerializer):
     editable = serializers.SerializerMethodField()
 
     @classmethod
-    def prefetch_queryset(cls, partner, edx_org_short_name=None, queryset=None, course_runs=None):
+    def prefetch_queryset(cls, partner, edx_org_short_name=None, queryset=None, course_runs=None, programs=None):
         """
         Similar to the CourseSerializer's prefetch_queryset, but prefetches a
         filtered CourseRun queryset.
@@ -1418,7 +1418,7 @@ class MinimalProgramSerializer(DynamicFieldsMixin, BaseModelSerializer):
     authoring_organizations = MinimalOrganizationSerializer(many=True)
     banner_image = StdImageSerializerField(allow_null=True, required=False)
     courses = serializers.SerializerMethodField()
-    type = serializers.SlugRelatedField(slug_field='name_t', queryset=ProgramType.objects.all())
+    type = serializers.SlugRelatedField(slug_field='slug', queryset=ProgramType.objects.all())
     type_attrs = ProgramTypeAttrsSerializer(source='type')
     degree = DegreeSerializer(allow_null=True, required=False)
     curricula = CurriculumSerializer(many=True)
@@ -1561,6 +1561,8 @@ class ProgramSerializer(MinimalProgramSerializer):
     min_hours_effort_per_week = IntegerField(min_value=0, default=0)
     max_hours_effort_per_week = IntegerField(min_value=0, default=0)
     marketing_slug = CharField()
+    type_attrs = ProgramTypeAttrsSerializer(source='type', required=False)
+    curricula = CurriculumSerializer(many=True, required=False)
 
     @classmethod
     def prefetch_queryset(cls, partner, queryset=None, edx_org_short_name=None):

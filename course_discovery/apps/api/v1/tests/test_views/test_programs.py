@@ -15,7 +15,7 @@ from course_discovery.apps.course_metadata.models import Program
 from course_discovery.apps.course_metadata.tests.factories import (
     CorporateEndorsementFactory, CourseFactory, CourseRunFactory, CurriculumCourseMembershipFactory, CurriculumFactory,
     CurriculumProgramMembershipFactory, EndorsementFactory, ExpectedLearningItemFactory, JobOutlookItemFactory,
-    OrganizationFactory, PersonFactory, ProgramFactory, VideoFactory
+    OrganizationFactory, PersonFactory, ProgramFactory, ProgramTypeFactory, VideoFactory
 )
 
 
@@ -47,9 +47,10 @@ class TestProgramViewSet(SerializationMixin):
     def _program_data(self):
         course_runs = CourseRunFactory.create_batch(3)
         organizations = OrganizationFactory.create_batch(3)
+        program_type = ProgramTypeFactory()
         return {
             "title": "Test Program",
-            "type": "XSeries",
+            "type": program_type.slug,
             "status": "active",
             "marketing_slug": "edX-test-program",
             "course_runs": [course_run.key for course_run in course_runs],

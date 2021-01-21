@@ -468,6 +468,18 @@ class CourseWithProgramsSerializerTests(CourseSerializerTests):
         serializer = self.serializer_class(self.course, context={'request': self.request})
         self.assertEqual(serializer.data['advertised_course_run_uuid'], expected_advertised_course_run.uuid)
 
+    def test_filter_courses_on_edx_org_short_name(self):
+        """
+        Verify courses filtering on edX organization works as expected..
+        """
+        edx_org_short_name = 'edx'
+        edx_org_course = CourseFactory(partner=self.partner, authoring_organizations__key=edx_org_short_name)
+        serialized_courses = self.serializer_class.prefetch_queryset(
+            partner=self.partner,
+            edx_org_short_name=edx_org_short_name
+        )
+        assert serialized_courses.values() != self.get_expected_data(edx_org_course, self.request).values()
+
 
 class CurriculumSerializerTests(TestCase):
     serializer_class = CurriculumSerializer
@@ -527,18 +539,6 @@ class CurriculumSerializerTests(TestCase):
 
         serializer = CurriculumSerializer(curriculum, context={'request': request})
         self.assertDictEqual(serializer.data, expected)
-
-    def test_filter_courses_on_edx_org_short_name(self):
-        """
-        Verify courses filtering on edX organization works as expected..
-        """
-        edx_org_short_name = 'edx'
-        edx_org_course = CourseFactory(partner=self.partner, authoring_organizations__key=edx_org_short_name)
-        serialized_courses = self.serializer_class.prefetch_queryset(
-            partner=self.partner,
-            edx_org_short_name=edx_org_short_name
-        )
-        assert serialized_courses.values() != self.get_expected_data(edx_org_course, self.request).values()
 
 
 class MinimalCourseRunBaseTestSerializer(TestCase):
@@ -635,7 +635,8 @@ class CourseRunSerializerTests(MinimalCourseRunBaseTestSerializer):
             'expected_program_type': course_run.expected_program_type,
             'first_enrollable_paid_seat_price': course_run.first_enrollable_paid_seat_price,
             'ofac_comment': course_run.ofac_comment,
-            'estimated_hours': get_course_run_estimated_hours(course_run)
+            'estimated_hours': get_course_run_estimated_hours(course_run),
+            'invite_only': course_run.invite_only
         })
         return expected
 
