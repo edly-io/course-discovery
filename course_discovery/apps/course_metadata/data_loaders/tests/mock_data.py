@@ -3093,6 +3093,15 @@ WORDPRESS_API_BODIES = [
             }
         ],
         'tags': ['tag1', 'tag2', 'tag3'],
-        'featured_image_url': 'http://example.com/demo-course-image.jpg'
+        'featured_image_url': 'http://example.com/demo-course-image.jpg',
+        'course_instructors': [
+            {
+                'given_name': 'Test instructor',
+                'bio': 'This is a test instructor',
+                'email': 'test@admin.com',
+                'designation': 'SQA',
+                'profile_image_url': 'http://example.com/demo-course-image.jpg'
+            }
+        ]
     }
 ]
