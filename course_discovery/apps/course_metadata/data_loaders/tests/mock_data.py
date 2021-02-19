@@ -3100,7 +3100,17 @@ WORDPRESS_API_BODIES = [
                 'bio': 'This is a test instructor',
                 'email': 'test@admin.com',
                 'designation': 'SQA',
-                'profile_image_url': 'http://example.com/demo-course-image.jpg'
+                'profile_image_url': 'http://example.com/demo-course-image.jpg',
+                'marketing_id': 100,
+                'marketing_url': 'http://example.com/demo-course-image',
+                'phone_number': '12345',
+                'website': 'http://example.com',
+                'instructor_socials': [
+                    {
+                        'field_name': 'facebook',
+                        'url': 'http://facebook.com'
+                    }
+                ]
             }
         ]
     }

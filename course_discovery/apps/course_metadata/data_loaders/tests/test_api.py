@@ -1142,6 +1142,12 @@ class WordPressApiDataLoaderTests(DataLoaderTestMixin, TestCase):
             assert instructor.email == course_instructor['email']
             assert instructor.bio == course_instructor['bio']
             assert instructor.profile_image_url == course_instructor['profile_image_url']
+            assert instructor.marketing_id == course_instructor['marketing_id']
+            assert instructor.marketing_url == course_instructor['marketing_url']
+            assert instructor.phone_number == course_instructor['phone_number']
+            assert instructor.website == course_instructor['website']
+            assert instructor.person_networks.first().type == course_instructor['instructor_socials'][0]['field_name']
+            assert instructor.person_networks.first().url == course_instructor['instructor_socials'][0]['url']
 
     def test_ingest_with_fail(self):
         """
