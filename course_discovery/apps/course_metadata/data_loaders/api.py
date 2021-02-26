@@ -187,6 +187,9 @@ class CoursesApiDataLoader(AbstractDataLoader):
             # NOTE (CCB): Use the data from the CourseKey since the Course API exposes display names for org and number,
             # which may not be unique for an organization.
             key = course_run_key.org
+            logger.info(key)
+            logger.info(self.partner)
+            logger.info(self.partner.short_code)
             defaults = {'key': key}
             organization, __ = Organization.objects.get_or_create(key__iexact=key, partner=self.partner,
                                                                   defaults=defaults)
