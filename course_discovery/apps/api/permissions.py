@@ -4,6 +4,8 @@ from rest_framework.permissions import SAFE_METHODS, BasePermission, DjangoModel
 from course_discovery.apps.course_metadata.models import CourseEditor
 from course_discovery.apps.course_metadata.utils import parse_course_key_fragment
 
+import logging
+log = logging.getLogger(__name__)
 USERNAME_REPLACEMENT_GROUP = "username_replacement_admin"
 
 
@@ -47,6 +49,7 @@ class IsCourseRunEditorOrDjangoOrReadOnly(BasePermission):
         self.django_perms = DjangoModelPermissions()
 
     def has_permission(self, request, view):
+        log.info(request.user)
         if self.django_perms.has_permission(request, view):
             return True
         elif request.user.is_staff:

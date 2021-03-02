@@ -75,6 +75,7 @@ class CourseRunViewSet(viewsets.ModelViewSet):
               multiple: false
         """
         q = self.request.query_params.get('q')
+        log.info(self.request.user)
         partner = self.request.site.partner
         edx_org_short_name = self.request.query_params.get('org')
         edit_mode = get_query_param(self.request, 'editable') or self.request.method not in SAFE_METHODS
