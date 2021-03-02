@@ -49,7 +49,6 @@ class IsCourseRunEditorOrDjangoOrReadOnly(BasePermission):
         self.django_perms = DjangoModelPermissions()
 
     def has_permission(self, request, view):
-        log.info(request.user)
         if self.django_perms.has_permission(request, view):
             return True
         elif request.user.is_staff:

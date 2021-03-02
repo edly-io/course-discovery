@@ -77,6 +77,7 @@ class CourseRunViewSet(viewsets.ModelViewSet):
         q = self.request.query_params.get('q')
         log.info(self.request.user)
         partner = self.request.site.partner
+        log.info(self.request.site.partner)
         edx_org_short_name = self.request.query_params.get('org')
         edit_mode = get_query_param(self.request, 'editable') or self.request.method not in SAFE_METHODS
 
@@ -99,6 +100,8 @@ class CourseRunViewSet(viewsets.ModelViewSet):
             return qs
 
         queryset = queryset.filter(course__partner=partner)
+        log.info(queryset)
+        log.info(edx_org_short_name)
         return self.get_serializer_class().prefetch_queryset(queryset=queryset, edx_org_short_name=edx_org_short_name)
 
     def get_serializer_context(self):
