@@ -9,9 +9,9 @@ from rest_framework import permissions
 logger = logging.getLogger(__name__)
 
 
-class CanAccessCurrentSite(permissions.BasePermission):
+class CanAccessSiteCreation(permissions.BasePermission):
     """
-    Permission to check if the current site is allowed for the user.
+    Checks if a user has the access to create and update methods for sites.
     """
 
     def has_permission(self, request, view):

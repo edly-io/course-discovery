@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from course_discovery.apps.core.models import Partner
 from edly_discovery_app.api.v1.constants import ERROR_MESSAGES
 from edly_discovery_app.api.v1.helpers import validate_partner_configurations
-from edly_discovery_app.api.v1.permissions import CanAccessCurrentSite
+from edly_discovery_app.api.v1.permissions import CanAccessSiteCreation
 
 
 class EdlySiteViewSet(APIView):
@@ -19,7 +19,7 @@ class EdlySiteViewSet(APIView):
     Create Default Site and Partner Configuration.
     """
     authentication_classes = (SessionAuthentication,)
-    permission_classes = [IsAuthenticated, CanAccessCurrentSite]
+    permission_classes = [IsAuthenticated, CanAccessSiteCreation]
 
     def post(self, request):
         """
