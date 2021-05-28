@@ -640,4 +640,3 @@ WORDPRESS_APP_AUTH_USERNAME = 'coursediscoveryworker'
 
 # Edly configuration
 EDLY_PANEL_WORKER_USER = 'edly_panel_worker'
-WORDPRESS_APP_AUTH_PASSWORD = 'raFn q3qt ij1E 4rp9 77Dj CgpQ'
