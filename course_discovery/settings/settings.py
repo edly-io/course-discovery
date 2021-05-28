@@ -1,3 +1,3 @@
-from course_discovery.settings.devstack import *
+from course_discovery.settings.production import *
 
 HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.BaseSignalProcessor'
