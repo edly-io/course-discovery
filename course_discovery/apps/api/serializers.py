@@ -1151,7 +1151,7 @@ class CourseWithProgramsSerializer(CourseSerializer):
             'prerequisites',
             'topics',
             'url_slug_history',
-            Prefetch('subjects', queryset=SubjectSerializer.prefetch_queryset()),
+            Prefetch('subjects', queryset=SubjectSerializer.prefetch_queryset(partner)),
             Prefetch('course_runs', queryset=CourseRunSerializer.prefetch_queryset(queryset=course_runs)),
             Prefetch('authoring_organizations', queryset=OrganizationSerializer.prefetch_queryset(partner)),
             Prefetch('sponsoring_organizations', queryset=OrganizationSerializer.prefetch_queryset(partner)),
