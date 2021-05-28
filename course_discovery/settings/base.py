@@ -637,7 +637,7 @@ MEDIA_STORAGE_BACKEND = {
     'MEDIA_URL': MEDIA_URL
 }
 WORDPRESS_APP_AUTH_USERNAME = 'coursediscoveryworker'
+WORDPRESS_APP_AUTH_PASSWORD = ''
 
 # Edly configuration
 EDLY_PANEL_WORKER_USER = 'edly_panel_worker'
-WORDPRESS_APP_AUTH_PASSWORD = ''
