@@ -525,7 +525,7 @@ HAYSTACK_CONNECTIONS = {
 
 # We do not use the RealtimeSignalProcessor here to avoid overloading our
 # Elasticsearch instance when running the refresh_course_metadata command
-HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.BaseSignalProcessor'
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 HAYSTACK_INDEX_RETENTION_LIMIT = 3
 
 # Update Index Settings
@@ -637,7 +637,7 @@ MEDIA_STORAGE_BACKEND = {
     'MEDIA_URL': MEDIA_URL
 }
 WORDPRESS_APP_AUTH_USERNAME = 'coursediscoveryworker'
-WORDPRESS_APP_AUTH_PASSWORD = ''
 
 # Edly configuration
 EDLY_PANEL_WORKER_USER = 'edly_panel_worker'
+WORDPRESS_APP_AUTH_PASSWORD = 'raFn q3qt ij1E 4rp9 77Dj CgpQ'

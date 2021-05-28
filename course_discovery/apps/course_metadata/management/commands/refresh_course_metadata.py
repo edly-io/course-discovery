@@ -1,3 +1,4 @@
+from django.conf import settings
 import concurrent.futures
 import itertools
 import logging
@@ -19,6 +20,11 @@ from course_discovery.apps.course_metadata.models import Course, DataLoaderConfi
 
 logger = logging.getLogger(__name__)
 
+
+# HAYSTACK_SIGNAL_PROCESSOR = settings.HAYSTACK_SIGNAL_PROCESSOR
+# setattr(settings, 'HAYSTACK_SIGNAL_PROCESSOR', '2313231313131');
+
+# settings.configure(HAYSTACK_SIGNAL_PROCESSOR='2313231313131')
 
 def execute_loader(loader_class, *loader_args):
     try:
@@ -50,6 +56,10 @@ def execute_parallel_loader(loader_class, *loader_args):
 
 class Command(BaseCommand):
     help = 'Refresh course metadata from external sources.'
+
+    logger.exception('%s HAYSTACK_SIGNAL_PROCESSOR type!',
+                     settings.HAYSTACK_SIGNAL_PROCESSOR)
+
 
     def add_arguments(self, parser):
         parser.add_argument(
