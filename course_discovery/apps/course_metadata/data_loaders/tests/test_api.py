@@ -23,7 +23,7 @@ from course_discovery.apps.course_metadata.data_loaders.tests import JPEG, JSON,
 from course_discovery.apps.course_metadata.data_loaders.tests.mixins import DataLoaderTestMixin
 from course_discovery.apps.course_metadata.models import (
     Course, CourseEntitlement, CourseRun, CourseRunType, CourseType, Organization, Person, Program, ProgramType, Seat,
-    SeatType
+    SeatType, Subject
 )
 from course_discovery.apps.course_metadata.tests.factories import (
     CourseEntitlementFactory, CourseFactory, CourseRunFactory, OrganizationFactory, SeatFactory, SeatTypeFactory
@@ -1087,11 +1087,12 @@ class WordPressApiDataLoaderTests(DataLoaderTestMixin, TestCase):
     def api_url(self):
         return self.partner.marketing_site_api_url
 
-    def mock_api(self):
+    def mock_api(self, bodies=None):
         """
         Mock the WordPress course run API.
         """
-        bodies = mock_data.WORDPRESS_API_BODIES
+        if not bodies:
+            bodies = mock_data.WORDPRESS_API_BODIES
         url = self.api_url.strip('/')
         responses.add_callback(
             responses.GET,
@@ -1112,12 +1113,16 @@ class WordPressApiDataLoaderTests(DataLoaderTestMixin, TestCase):
 
         assert got == tags
 
-    def test_ingest(self):
+    @ddt.data(
+        mock_data.WORDPRESS_API_BODIES,
+        mock_data.WORDPRESS_API_BODIES_UPDATED
+    )
+    def test_ingest(self, api_data):
         """
         Test the WordPress data loader.
         """
         TieredCache.dangerous_clear_all_tiers()
-        api_data = self.mock_api()
+        self.mock_api(api_data)
         expected_course = api_data[0]
         CourseRunFactory(
             key=expected_course['course_id'],
@@ -1135,6 +1140,7 @@ class WordPressApiDataLoaderTests(DataLoaderTestMixin, TestCase):
         assert course.is_marketing_price_set == expected_course['price']
         assert course.marketing_price_value == expected_course['price_value']
         assert course.is_marketing_price_hidden == expected_course['hide_price']
+        assert Subject.objects.count() == len(expected_course['categories'])
         self.assert_tags_equal(course.tags.all(), expected_course['tags'])
 
         for category in expected_course['categories']:

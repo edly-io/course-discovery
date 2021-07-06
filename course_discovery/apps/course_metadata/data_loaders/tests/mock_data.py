@@ -3123,3 +3123,63 @@ WORDPRESS_API_BODIES = [
         'status': 'publish'
     }
 ]
+
+WORDPRESS_API_BODIES_UPDATED = [
+    {
+        'course_id': 'course-v1:edX+DemoX+Demo_Course',
+        'slug': 'demo-course',
+        'permalink': 'https://example.com/course/demo-course',
+        'title': 'Demo Course',
+        'description': 'This is long description',
+        'excerpt': 'This is short description',
+        'featured': True,
+        'categories': [
+            {
+                'id': '3',
+                'title': 'Science',
+                'slug': 'science',
+                'description': 'Science category description',
+                'permalink': 'http://example.com/category/science'
+            },
+            {
+                'id': '4',
+                'title': 'Medical',
+                'slug': 'medical',
+                'description': 'Medical category description',
+                'permalink': 'http://example.com/category/medical'
+            },
+            {
+                'id': '5',
+                'title': 'AI',
+                'slug': 'ai',
+                'description': 'AI category description',
+                'permalink': 'http://example.com/category/ai'
+            }
+        ],
+        'tags': ['tag1', 'tag2', 'tag3'],
+        'featured_image_url': 'http://example.com/demo-course-image.jpg',
+        'course_instructors': [
+            {
+                'given_name': 'Test instructor',
+                'bio': 'This is a test instructor',
+                'email': 'test@admin.com',
+                'designation': 'SQA',
+                'profile_image_url': 'http://example.com/demo-course-image.jpg',
+                'marketing_id': 100,
+                'marketing_url': 'http://example.com/demo-course-image',
+                'phone_number': '12345',
+                'website': 'http://example.com',
+                'instructor_socials': [
+                    {
+                        'field_name': 'facebook',
+                        'url': 'http://facebook.com'
+                    }
+                ]
+            }
+        ],
+        'price': True,
+        'price_value' : '$100',
+        'hide_price': False,
+        'status': 'publish'
+    }
+]

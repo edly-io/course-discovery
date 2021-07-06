@@ -1,4 +1,5 @@
 import concurrent.futures
+from conftest import partner
 import logging
 import math
 import threading
@@ -915,6 +916,7 @@ class WordPressApiDataLoader(AbstractDataLoader):
         response = self._make_request(initial_page)
         count = response['pagination']['count']
         pages = response['pagination']['num_pages']
+        self._delete_subjects()
         self._process_response(response)
 
         pagerange = range(initial_page + 1, pages + 1)
@@ -991,14 +993,19 @@ class WordPressApiDataLoader(AbstractDataLoader):
 
             if not course_run.staff.filter(uuid=instructor.uuid).exists():
                 course_run.staff.add(instructor)
+    
+    def _delete_subjects(self):
+        """
+        Delete all subjects of partner.
+        """
+        Subject.objects.filter(partner=self.partner).delete()
 
     def _add_course_subjects(self, categories, course_run):
         """
         Create and add course subjects to a course run.
         """
-        course_run.course.subjects.clear()
         for category in categories:
-            subject, created = Subject.objects.get_or_create(
+            subject, __ = Subject.objects.get_or_create(
                 marketing_id=category['id'],
                 partner=self.partner,
                 defaults={
@@ -1008,13 +1015,6 @@ class WordPressApiDataLoader(AbstractDataLoader):
                     'slug': category['slug']
                 }
             )
-
-            if not created:
-                subject.description = category['description']
-                subject.marketing_url = category['permalink']
-                subject.name = category['title']
-                subject.slug = category['slug']
-                subject.save()
 
             course_run.course.subjects.add(subject)
 
