@@ -1,5 +1,4 @@
 import concurrent.futures
-from conftest import partner
 import logging
 import math
 import threading
