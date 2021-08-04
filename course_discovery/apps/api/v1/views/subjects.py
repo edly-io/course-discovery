@@ -23,7 +23,8 @@ class SubjectViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         partner = self.request.site.partner
-        return serializers.SubjectSerializer.prefetch_queryset(partner=partner)
+        language_code = self.request.GET.get('language_code', 'en')
+        return serializers.SubjectSerializer.prefetch_queryset(partner=partner, language_code=language_code)
 
     def list(self, request, *args, **kwargs):
         """ Retrieve a list of all subjects. """

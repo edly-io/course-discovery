@@ -253,8 +253,8 @@ class SubjectSerializer(DynamicFieldsMixin, BaseModelSerializer):
     number_of_courses = serializers.SerializerMethodField()
 
     @classmethod
-    def prefetch_queryset(cls, partner):
-        return Subject.objects.filter(partner=partner).prefetch_related('translations')
+    def prefetch_queryset(cls, partner, language_code='en'):
+        return Subject.objects.translated(language_code).filter(partner=partner).prefetch_related('translations')
 
     class Meta:
         model = Subject
