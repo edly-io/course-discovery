@@ -1016,7 +1016,7 @@ class WordPressApiDataLoader(AbstractDataLoader):
                 subject.slug = category['slug']
                 subject.save()
 
-            if subject:
+            if subject and category.get('title_translations', None):
                 for language_code, translated_title in category['title_translations'].items():
                     subject_translation, __ = SubjectTranslation.objects.get_or_create(
                         master_id=subject.pk,
