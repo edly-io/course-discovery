@@ -7,7 +7,7 @@ import logging
 
 from course_discovery.apps.core.utils import serialize_datetime
 from course_discovery.apps.course_metadata.data_loaders import AbstractDataLoader
-from course_discovery.apps.course_metadata.models import CourseRunPacing, Person, ProgramType
+from course_discovery.apps.course_metadata.models import Collaborator, CourseRunPacing, Person, ProgramType
 from course_discovery.apps.ietf_language_tags.models import LanguageTag
 
 logger = logging.getLogger(__name__)
@@ -65,12 +65,11 @@ class CSVDataLoader(AbstractDataLoader):
             'course_run': course_run_creation_fields
         }
 
-    def _update_course_api_request_data(self, data, course, collaborators, image):
+    def _update_course_api_request_data(self, data, course, image):
         """
         Create the request data for making a patch call to update the course.
 
         Arguments:
-            * collaborators(list): list of collaborator uuids
             * image: base64 encoded image
         """
         subjects = [
@@ -79,6 +78,14 @@ class CSVDataLoader(AbstractDataLoader):
             data.get('Tertiary Subject')
         ]
         subjects = [subject for subject in subjects if subject]
+        collaborators = data['Collaborators'].split(',')
+        collaborator_uuids = []
+        for collaborator in collaborators:
+            collaborator_obj, created = Collaborator.objects.get_or_create(name=collaborator)
+            collaborator_uuids.append(collaborator.uuid)
+            if created:
+                logger.info("Collaborator {} created for course {}".format(collaborator, course.key))
+
         pricing = {
             'verified': data['Verified Price'],  # TODO: temporary value to verified
             # Actual value from course type -> entitlement_tracks -> slugs
@@ -94,7 +101,7 @@ class CSVDataLoader(AbstractDataLoader):
             'image': image,
             'prices': pricing,
             'subjects': subjects,
-            'collaborators': collaborators,
+            'collaborators': collaborator_uuids,
 
             'title': data['Title'],
             'syllabus_raw': data['Syllabus'],
@@ -135,7 +142,10 @@ class CSVDataLoader(AbstractDataLoader):
             )
             staff_uuids.append(person.uuid)
             if created:
-                logger.info(f"Staff with name {staff_name} has been created for course run {course_run.key}")
+                logger.info("Staff with name {} has been created for course run {}".format(
+                    staff_name,
+                    course_run.key
+                ))
 
         pricing = {
             'verified': data['Verified Price'],  # TODO: temporary value to verified
