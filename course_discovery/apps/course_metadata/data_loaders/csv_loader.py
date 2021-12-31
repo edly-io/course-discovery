@@ -65,12 +65,9 @@ class CSVDataLoader(AbstractDataLoader):
             'course_run': course_run_creation_fields
         }
 
-    def _update_course_api_request_data(self, data, course, image):
+    def _update_course_api_request_data(self, data, course):
         """
         Create the request data for making a patch call to update the course.
-
-        Arguments:
-            * image: base64 encoded image
         """
         subjects = [
             data.get('Primary Subject'),
@@ -98,7 +95,6 @@ class CSVDataLoader(AbstractDataLoader):
             'url_slug': course.url_slug,
             'type': course.type.uuid,
 
-            'image': image,
             'prices': pricing,
             'subjects': subjects,
             'collaborators': collaborator_uuids,
