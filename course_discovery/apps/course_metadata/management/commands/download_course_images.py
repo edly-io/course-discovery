@@ -1,10 +1,7 @@
 import logging
 
-import requests
-from django.core.files.base import ContentFile
 from django.core.management import BaseCommand
 
-from course_discovery.apps.course_metadata.constants import IMAGE_TYPES
 from course_discovery.apps.course_metadata.models import Course
 from course_discovery.apps.course_metadata.utils import download_and_save_course_image
 

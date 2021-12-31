@@ -5,9 +5,14 @@ provided a csv containing the required information.
 import csv
 import logging
 
+from django.urls import reverse
+
 from course_discovery.apps.core.utils import serialize_datetime
 from course_discovery.apps.course_metadata.data_loaders import AbstractDataLoader
-from course_discovery.apps.course_metadata.models import Collaborator, CourseRunPacing, Person, ProgramType
+from course_discovery.apps.course_metadata.models import (
+    Collaborator, Course, CourseRun, CourseRunPacing, CourseRunType, CourseType, Organization, Person, ProgramType
+)
+from course_discovery.apps.course_metadata.utils import download_and_save_course_image
 from course_discovery.apps.ietf_language_tags.models import LanguageTag
 
 logger = logging.getLogger(__name__)
@@ -34,9 +39,63 @@ class CSVDataLoader(AbstractDataLoader):
             raise  # re-raising exception to avoid moving the code flow
 
     def ingest(self):
-        pass
+        logger.info("Initiating CSV data loader flow")
+        for row in self.reader:
 
-    def _create_course_api_request_data(self, data, enrollment_type_uuid, course_run_type_uuid):
+            course_title = row['Title']
+            org_key = row['Organization']
+
+            logger.info(f'Starting data import flow for {course_title}')
+
+            if not Organization.objects.filter(key=org_key).exists():
+                logger.error("Organization {} does not exist in database. Skipping CSV loader for course {}".format(
+                    org_key,
+                    course_title
+                ))
+                continue
+
+            try:
+                course_type = CourseType.objects.get(name=row['Course Enrollment track'])
+                course_run_type = CourseRunType.objects.get(name=row['Course Run Enrollment Track'])
+            except CourseType.DoesNotExist:
+                logger.exception("CourseType {} does not exist in the database.".format(
+                    row['Course Enrollment track']
+                ))
+                continue
+            except CourseRunType.DoesNotExist:
+                logger.exception("CourseRunType {} does not exist in the database.".format(
+                    row['Course Run Enrollment track']
+                ))
+                continue
+
+            course_key = self.get_course_key(org_key, row['Number'])
+
+            try:
+                # TODO: to confirm if draft based filtering is necessary or not
+                course = Course.everything.get(key=course_key, partner=self.partner)
+                course_run = CourseRun.everything.get(course=course)
+            except Course.DoesNotExist:
+                logger.info("Course with key {} not found in database, creating the course.".format(course_key))
+                try:
+                    _ = self._create_course(row, course_type.uuid, course_run_type.uuid)
+                except Exception:  # pylint: disable=broad-except
+                    logger.exception("Error occurred when attempting to create a new course against key {}".format(
+                        course_key
+                    ))
+                    continue
+                course = Course.everything.get(key=course_key, partner=self.partner)
+                course_run = CourseRun.everything.get(course=course)
+
+            try:
+                self._update_course(row, course)
+                self._update_course_run(row, course_run)
+                download_and_save_course_image(course, row['Image'])
+                logger.info("Course and course run updated successfully")
+            except Exception:  # pylint: disable=broad-except
+                logger.exception("Error occurred while updating course and course run")
+                continue
+
+    def _create_course_api_request_data(self, data, course_type_uuid, course_run_type_uuid):
         """
         Given a data dictionary, return a reduced data representation in dict
         which will be used as course api request data.
@@ -51,16 +110,16 @@ class CSVDataLoader(AbstractDataLoader):
         # TODO: make appropriate timezone adjustment when it is confirmed if time values are in EST or UTC
         course_run_creation_fields = {
             'pacing_type': self.get_pacing_type(data['Course Pacing']),
-            'start': self.get_formatted_datetime_string(f"{data['Start Date']}{data['Start Time']}"),
-            'end': self.get_formatted_datetime_string(f"{data['End Date']}{data['End Time']}"),
-            'run_type': course_run_type_uuid,
+            'start': self.get_formatted_datetime_string(f"{data['Start Date']} {data['Start Time']}"),
+            'end': self.get_formatted_datetime_string(f"{data['End Date']} {data['End Time']}"),
+            'run_type': str(course_run_type_uuid),
             'prices': pricing
         }
         return {
             'org': data['Organization'],
             'title': data['Title'],
             'number': data['Number'],
-            'type': enrollment_type_uuid,
+            'type': str(course_type_uuid),
             'prices': pricing,
             'course_run': course_run_creation_fields
         }
@@ -75,11 +134,14 @@ class CSVDataLoader(AbstractDataLoader):
             data.get('Tertiary Subject')
         ]
         subjects = [subject for subject in subjects if subject]
+        subjects = list(set(subjects))
+
         collaborators = data['Collaborators'].split(',')
+        collaborators = [collaborator for collaborator in collaborators if collaborator.strip()]
         collaborator_uuids = []
         for collaborator in collaborators:
             collaborator_obj, created = Collaborator.objects.get_or_create(name=collaborator)
-            collaborator_uuids.append(collaborator.uuid)
+            collaborator_uuids.append(str(collaborator_obj.uuid))
             if created:
                 logger.info("Collaborator {} created for course {}".format(collaborator, course.key))
 
@@ -90,10 +152,10 @@ class CSVDataLoader(AbstractDataLoader):
         # draft: true
 
         update_course_data = {
-            'uuid': course.uuid,
+            'uuid': str(course.uuid),
             'key': course.key,
             'url_slug': course.url_slug,
-            'type': course.type.uuid,
+            'type': str(course.type.uuid),
 
             'prices': pricing,
             'subjects': subjects,
@@ -127,6 +189,7 @@ class CSVDataLoader(AbstractDataLoader):
                             f"Transcript Languages: {data['Transcript Language']}")
 
         staff_names_list = data['Staff'].split(',')
+        staff_names_list = [staff_name for staff_name in staff_names_list if staff_name.strip()]
         staff_uuids = []
 
         # TODO: This is a fragile approach. It is possible for two people to have same name within a partner.
@@ -136,7 +199,7 @@ class CSVDataLoader(AbstractDataLoader):
                 partner=self.partner,
                 given_name=staff_name
             )
-            staff_uuids.append(person.uuid)
+            staff_uuids.append(str(person.uuid))
             if created:
                 logger.info("Staff with name {} has been created for course run {}".format(
                     staff_name,
@@ -150,7 +213,7 @@ class CSVDataLoader(AbstractDataLoader):
         program_type = data['Expected Program Type']
 
         update_course_run_data = {
-            'run_type': course_run.type.uuid,
+            'run_type': str(course_run.type.uuid),
             'key': course_run.key,
 
             'prices': pricing,
@@ -165,7 +228,7 @@ class CSVDataLoader(AbstractDataLoader):
             'go_live_date': self.get_formatted_datetime_string(data['Publish Date']),
             'expected_program_type': program_type if program_type in self.PROGRAM_TYPES else None,
             'upgrade_deadline_override': self.get_formatted_datetime_string(
-                f"{data['Upgrade Deadline Override Date']}{data['Upgrade Deadline Override Time']}"
+                f"{data['Upgrade Deadline Override Date']} {data['Upgrade Deadline Override Time']}"
             ),
         }
         return update_course_run_data
@@ -199,8 +262,58 @@ class CSVDataLoader(AbstractDataLoader):
         languages_list.append(content_language)
         languages_list = list(set(languages_list))
         for language in languages_list:
-            if not LanguageTag.objects.filter(name=language).exists():
+            if not LanguageTag.objects.filter(name=language.lower()).exists():
                 # Returning false instead of creating Language entry because the languages
                 # in discovery are per IETF standard.
                 return False
         return True
+
+    def _create_course(self, data, course_type_uuid, course_run_type_uuid):
+        """
+        Make a course entry through course api.
+
+        (Question: Should api call be made via client or by direct call of method of ViewSet?)
+        """
+        request_data = self._create_course_api_request_data(data, course_type_uuid, course_run_type_uuid)
+        # TODO: Add proper discovery base url settings
+        response = self.api_client.request(
+            'POST',
+            'http://localhost:18381' + reverse('api:v1:course-list'),
+            json=request_data
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def _update_course(self, data, course):
+        """
+        Update the course data.
+
+        (Question: Should api call be made via client or by direct call of method of ViewSet?)
+        """
+        request_data = self._update_course_api_request_data(data, course)
+        response = self.api_client.request(
+            'PATCH',
+            'http://localhost:18381' + reverse('api:v1:course-detail', kwargs={'key': course.key}),
+            json=request_data)
+        response.raise_for_status()
+        return response.json()
+
+    def _update_course_run(self, data, course_run):
+        """
+        Update the course data.
+
+        (Question: Should api call be made via client or by direct call of method of ViewSet?)
+        """
+        request_data = self._update_course_run_request_data(data, course_run)
+        response = self.api_client.request(
+            'PATCH',
+            'http://localhost:18381' + reverse('api:v1:course_run-detail', kwargs={'key': course_run.key}),
+            json=request_data)
+        response.raise_for_status()
+        return response.json()
+
+    def get_course_key(self, organization_key, number):
+        """
+        Given organization key and course number, return course key.
+        """
+        return '{org}+{number}'.format(org=organization_key, number=number)
