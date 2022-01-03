@@ -5,6 +5,7 @@ provided a csv containing the required information.
 import csv
 import logging
 
+from django.db.models import Q
 from django.urls import reverse
 
 from course_discovery.apps.core.utils import serialize_datetime
@@ -63,7 +64,6 @@ class CSVDataLoader(AbstractDataLoader):
             org_key = row['organization']
 
             logger.info('Starting data import flow for {}'.format(course_title))
-
             if not Organization.objects.filter(key=org_key).exists():
                 logger.error("Organization {} does not exist in database. Skipping CSV loader for course {}".format(
                     org_key,
@@ -151,7 +151,8 @@ class CSVDataLoader(AbstractDataLoader):
             data.get('secondary_subject'),
             data.get('tertiary_subject')
         ]
-        subjects = [subject for subject in subjects if subject]
+        # Transform subject names into slugs
+        subjects = [subject.lower().replace(' ', '-') for subject in subjects if subject]
         subjects = list(set(subjects))
 
         collaborators = data['collaborators'].split(',')
@@ -173,7 +174,6 @@ class CSVDataLoader(AbstractDataLoader):
             'key': course.key,
             'url_slug': course.url_slug,
             'type': str(course.type.uuid),
-            'draft': False,
 
             'prices': pricing,
             'subjects': subjects,
@@ -199,12 +199,17 @@ class CSVDataLoader(AbstractDataLoader):
         # rerun: null
         # status: "unpublished"
 
-        content_language = data['content_language']
-        transcript_language = data['transcript_language'].split(',')
-        if not self.verify_languages(content_language, transcript_language):
-            raise Exception(f"One or more languages are not valid ietf languages. "
-                            f"Content Language: {data['content_language']},"
-                            f"Transcript Languages: {data['transcript_language']}")
+        try:
+            content_language = self.verify_and_get_language_tags(data['content_language'])
+            transcript_language = self.verify_and_get_language_tags(data['transcript_language'])
+        except Exception:
+            logger.exception(
+                "One or more languages are not valid ietf languages. "
+                "Content Language: {}, Transcript Language: {}".format(
+                    data['content_language'], data['transcript_language']
+                )
+            )
+            return
 
         staff_names_list = data['staff'].split(',')
         staff_names_list = [staff_name for staff_name in staff_names_list if staff_name.strip()]
@@ -233,7 +238,6 @@ class CSVDataLoader(AbstractDataLoader):
         update_course_run_data = {
             'run_type': str(course_run.type.uuid),
             'key': course_run.key,
-            'draft': False,
 
             'prices': pricing,
             'staff': staff_uuids,
@@ -241,9 +245,9 @@ class CSVDataLoader(AbstractDataLoader):
             'weeks_to_complete': data['length'],
             'min_effort': data['minimum_effort'],
             'max_effort': data['maximum_effort'],
-            'content_language': data['content_language'],
+            'content_language': content_language[0],
             'expected_program_name': data['expected_program_name'],
-            'transcript_languages': data['transcript_language'].split(','),
+            'transcript_languages': transcript_language,
             'go_live_date': self.get_formatted_datetime_string(data['publish_date']),
             'expected_program_type': program_type if program_type in self.PROGRAM_TYPES else None,
             'upgrade_deadline_override': self.get_formatted_datetime_string(
@@ -272,20 +276,25 @@ class CSVDataLoader(AbstractDataLoader):
         else:
             return None
 
-    def verify_languages(self, content_language, transcript_languages):
+    def verify_and_get_language_tags(self, language_str):
         """
-        Given a list of language names, verify that the entries are valid and present
-        in the database.
+        Given a string of language tags or names, verify their existence in the database
+        and return a list of language codes.
         """
-        languages_list = transcript_languages.copy()
-        languages_list.append(content_language)
-        languages_list = list(set(languages_list))
+        languages_codes_list = []
+        languages_list = language_str.split(',')
         for language in languages_list:
-            if not LanguageTag.objects.filter(name=language.lower()).exists():
-                # Returning false instead of creating Language entry because the languages
-                # in discovery are per IETF standard.
-                return False
-        return True
+            language_obj = LanguageTag.objects.filter(
+                Q(name=language.lower()) | Q(code=language.lower())
+            ).first()
+            if not language_obj:
+                raise Exception(
+                    'Language {} from provided string {} is either missing or an invalid ietf language'.format(
+                        language, language_str
+                    )
+                )
+            languages_codes_list.append(language_obj.code)
+        return languages_codes_list
 
     def _create_course(self, data, course_type_uuid, course_run_type_uuid):
         """
@@ -300,6 +309,8 @@ class CSVDataLoader(AbstractDataLoader):
             'http://localhost:18381' + reverse('api:v1:course-list'),
             json=request_data
         )
+        if response.status_code != 200:
+            logger.info("Course creation response: {}".format(response.content))
         response.raise_for_status()
         return response.json()
 
@@ -314,12 +325,14 @@ class CSVDataLoader(AbstractDataLoader):
             'PATCH',
             'http://localhost:18381' + reverse('api:v1:course-detail', kwargs={'key': course.key}),
             json=request_data)
+        if response.status_code != 200:
+            logger.info("Course update response: {}".format(response.content))
         response.raise_for_status()
         return response.json()
 
     def _update_course_run(self, data, course_run):
         """
-        Update the course data.
+        Update the course run data.
 
         (Question: Should api call be made via client or by direct call of method of ViewSet?)
         """
@@ -328,6 +341,8 @@ class CSVDataLoader(AbstractDataLoader):
             'PATCH',
             'http://localhost:18381' + reverse('api:v1:course_run-detail', kwargs={'key': course_run.key}),
             json=request_data)
+        if response.status_code != 200:
+            logger.info("Course run update response: {}".format(response.content))
         response.raise_for_status()
         return response.json()
 
