@@ -35,17 +35,34 @@ class CSVDataLoader(AbstractDataLoader):
         try:
             self.reader = csv.DictReader(open(csv_path, 'r'))
         except FileNotFoundError:
-            logger.exception(f"Error opening csv file at path {csv_path}")
+            logger.exception("Error opening csv file at path {}".format(csv_path))
             raise  # re-raising exception to avoid moving the code flow
+
+    def transform_dict_keys(self, data):
+        """
+        Given a data dictionary, return a new dict that has its keys transformed to
+        snake case. For example, Enrollment Track becomes enrollment_track.
+
+        Each key is stripped of whitespaces around the edges, converted to lower case,
+        and has internal spaces converted to _. This convention removes the dependency on CSV
+        headers format(Enrollment Track vs Enrollment track) and makes code flexible to ignore
+        any case sensitivity, among other things.
+        """
+        transformed_dict = {}
+        for key, value in data.items():
+            updated_key = key.strip().lower().replace(' ', '_')
+            transformed_dict[updated_key] = value
+        return transformed_dict
 
     def ingest(self):
         logger.info("Initiating CSV data loader flow")
         for row in self.reader:
 
-            course_title = row['Title']
-            org_key = row['Organization']
+            row = self.transform_dict_keys(row)
+            course_title = row['title']
+            org_key = row['organization']
 
-            logger.info(f'Starting data import flow for {course_title}')
+            logger.info('Starting data import flow for {}'.format(course_title))
 
             if not Organization.objects.filter(key=org_key).exists():
                 logger.error("Organization {} does not exist in database. Skipping CSV loader for course {}".format(
@@ -55,25 +72,26 @@ class CSVDataLoader(AbstractDataLoader):
                 continue
 
             try:
-                course_type = CourseType.objects.get(name=row['Course Enrollment track'])
-                course_run_type = CourseRunType.objects.get(name=row['Course Run Enrollment Track'])
+                course_type = CourseType.objects.get(name=row['course_enrollment_track'])
+                course_run_type = CourseRunType.objects.get(name=row['course_run_enrollment_track'])
             except CourseType.DoesNotExist:
                 logger.exception("CourseType {} does not exist in the database.".format(
-                    row['Course Enrollment track']
+                    row['course_enrollment_track']
                 ))
                 continue
             except CourseRunType.DoesNotExist:
                 logger.exception("CourseRunType {} does not exist in the database.".format(
-                    row['Course Run Enrollment track']
+                    row['course_run_enrollment_track']
                 ))
                 continue
 
-            course_key = self.get_course_key(org_key, row['Number'])
+            course_key = self.get_course_key(org_key, row['number'])
 
             try:
                 # TODO: to confirm if draft based filtering is necessary or not
                 course = Course.everything.get(key=course_key, partner=self.partner)
                 course_run = CourseRun.everything.get(course=course)
+                logger.info("Course {} located in the database.".format(course_key))
             except Course.DoesNotExist:
                 logger.info("Course with key {} not found in database, creating the course.".format(course_key))
                 try:
@@ -89,7 +107,7 @@ class CSVDataLoader(AbstractDataLoader):
             try:
                 self._update_course(row, course)
                 self._update_course_run(row, course_run)
-                download_and_save_course_image(course, row['Image'])
+                download_and_save_course_image(course, row['image'])
                 logger.info("Course and course run updated successfully")
             except Exception:  # pylint: disable=broad-except
                 logger.exception("Error occurred while updating course and course run")
@@ -103,22 +121,22 @@ class CSVDataLoader(AbstractDataLoader):
         TODO: update the keys in data when the actual CSV structure is confirmed.
         """
         pricing = {
-            'verified': data['Verified Price'],  # TODO: temporary value to verified
+            'verified': data['verified_price'],  # TODO: temporary value to verified
             # Actual value from course type -> entitlement_tracks -> slugs
         }
 
         # TODO: make appropriate timezone adjustment when it is confirmed if time values are in EST or UTC
         course_run_creation_fields = {
-            'pacing_type': self.get_pacing_type(data['Course Pacing']),
-            'start': self.get_formatted_datetime_string(f"{data['Start Date']} {data['Start Time']}"),
-            'end': self.get_formatted_datetime_string(f"{data['End Date']} {data['End Time']}"),
+            'pacing_type': self.get_pacing_type(data['course_pacing']),
+            'start': self.get_formatted_datetime_string(f"{data['start_date']} {data['start_time']}"),
+            'end': self.get_formatted_datetime_string(f"{data['end_date']} {data['end_time']}"),
             'run_type': str(course_run_type_uuid),
             'prices': pricing
         }
         return {
-            'org': data['Organization'],
-            'title': data['Title'],
-            'number': data['Number'],
+            'org': data['organization'],
+            'title': data['title'],
+            'number': data['number'],
             'type': str(course_type_uuid),
             'prices': pricing,
             'course_run': course_run_creation_fields
@@ -129,14 +147,14 @@ class CSVDataLoader(AbstractDataLoader):
         Create the request data for making a patch call to update the course.
         """
         subjects = [
-            data.get('Primary Subject'),
-            data.get('Secondary Subject'),
-            data.get('Tertiary Subject')
+            data.get('primary_subject'),
+            data.get('secondary_subject'),
+            data.get('tertiary_subject')
         ]
         subjects = [subject for subject in subjects if subject]
         subjects = list(set(subjects))
 
-        collaborators = data['Collaborators'].split(',')
+        collaborators = data['collaborators'].split(',')
         collaborators = [collaborator for collaborator in collaborators if collaborator.strip()]
         collaborator_uuids = []
         for collaborator in collaborators:
@@ -146,32 +164,32 @@ class CSVDataLoader(AbstractDataLoader):
                 logger.info("Collaborator {} created for course {}".format(collaborator, course.key))
 
         pricing = {
-            'verified': data['Verified Price'],  # TODO: temporary value to verified
+            'verified': data['verified_price'],  # TODO: temporary value to verified
             # Actual value from course type -> entitlement_tracks -> slugs
         }
-        # draft: true
 
         update_course_data = {
             'uuid': str(course.uuid),
             'key': course.key,
             'url_slug': course.url_slug,
             'type': str(course.type.uuid),
+            'draft': False,
 
             'prices': pricing,
             'subjects': subjects,
             'collaborators': collaborator_uuids,
 
-            'title': data['Title'],
-            'syllabus_raw': data['Syllabus'],
-            'level_type': data['Course Level'],
-            'outcome': data['What will you learn'],
-            'faq': data['Frequently Asked Questions'],
-            'video': {'src': data['About Video Link']},
-            'prerequisites_raw': data['Prerequisites'],
-            'full_description': data['Long Description'],
-            'short_description': data['Short Description'],
-            'learner_testimonials': data['Learner Testimonials'],
-            'additional_information': data['Additional Information'],
+            'title': data['title'],
+            'syllabus_raw': data['syllabus'],
+            'level_type': data['course_level'],
+            'outcome': data['what_will_you_learn'],
+            'faq': data['frequently_asked_questions'],
+            'video': {'src': data['about_video_link']},
+            'prerequisites_raw': data['prerequisites'],
+            'full_description': data['long_description'],
+            'short_description': data['short_description'],
+            'learner_testimonials': data['learner_testimonials'],
+            'additional_information': data['additional_information'],
         }
         return update_course_data
 
@@ -181,14 +199,14 @@ class CSVDataLoader(AbstractDataLoader):
         # rerun: null
         # status: "unpublished"
 
-        content_language = data['Content Language']
-        transcript_language = data['Transcript Language'].split(',')
+        content_language = data['content_language']
+        transcript_language = data['transcript_language'].split(',')
         if not self.verify_languages(content_language, transcript_language):
             raise Exception(f"One or more languages are not valid ietf languages. "
-                            f"Content Language: {data['Content Language']}"
-                            f"Transcript Languages: {data['Transcript Language']}")
+                            f"Content Language: {data['content_language']},"
+                            f"Transcript Languages: {data['transcript_language']}")
 
-        staff_names_list = data['Staff'].split(',')
+        staff_names_list = data['staff'].split(',')
         staff_names_list = [staff_name for staff_name in staff_names_list if staff_name.strip()]
         staff_uuids = []
 
@@ -207,28 +225,29 @@ class CSVDataLoader(AbstractDataLoader):
                 ))
 
         pricing = {
-            'verified': data['Verified Price'],  # TODO: temporary value to verified
+            'verified': data['verified_price'],  # TODO: temporary value to verified
             # Actual value from course type -> entitlement_tracks -> slugs
         }
-        program_type = data['Expected Program Type']
+        program_type = data['expected_program_type']
 
         update_course_run_data = {
             'run_type': str(course_run.type.uuid),
             'key': course_run.key,
+            'draft': False,
 
             'prices': pricing,
             'staff': staff_uuids,
 
-            'weeks_to_complete': data['Length'],
-            'min_effort': data['Minimum effort'],
-            'max_effort': data['Maximum effort'],
-            'content_language': data['Content Language'],
-            'expected_program_name': data['Expected Program Name'],
-            'transcript_languages': data['Transcript Language'].split(','),
-            'go_live_date': self.get_formatted_datetime_string(data['Publish Date']),
+            'weeks_to_complete': data['length'],
+            'min_effort': data['minimum_effort'],
+            'max_effort': data['maximum_effort'],
+            'content_language': data['content_language'],
+            'expected_program_name': data['expected_program_name'],
+            'transcript_languages': data['transcript_language'].split(','),
+            'go_live_date': self.get_formatted_datetime_string(data['publish_date']),
             'expected_program_type': program_type if program_type in self.PROGRAM_TYPES else None,
             'upgrade_deadline_override': self.get_formatted_datetime_string(
-                f"{data['Upgrade Deadline Override Date']} {data['Upgrade Deadline Override Time']}"
+                f"{data['upgrade_deadline_override_date']} {data['upgrade_deadline_override_time']}"
             ),
         }
         return update_course_run_data
