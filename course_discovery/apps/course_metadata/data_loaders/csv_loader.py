@@ -56,7 +56,7 @@ class CSVDataLoader(AbstractDataLoader):
         return transformed_dict
 
     def ingest(self):
-        logger.info("Initiating CSV data loader flow")
+        logger.info("Initiating CSV data loader flow.")
         for row in self.reader:
 
             row = self.transform_dict_keys(row)
@@ -91,9 +91,9 @@ class CSVDataLoader(AbstractDataLoader):
                 # TODO: to confirm if draft based filtering is necessary or not
                 course = Course.everything.get(key=course_key, partner=self.partner)
                 course_run = CourseRun.everything.get(course=course)
-                logger.info("Course {} located in the database.".format(course_key))
+                logger.info("Course {} is located in the database.".format(course_key))
             except Course.DoesNotExist:
-                logger.info("Course with key {} not found in database, creating the course.".format(course_key))
+                logger.info("Course key {} could not be found in database, creating the course.".format(course_key))
                 try:
                     _ = self._create_course(row, course_type.uuid, course_run_type.uuid)
                 except Exception:  # pylint: disable=broad-except
@@ -106,12 +106,24 @@ class CSVDataLoader(AbstractDataLoader):
 
             try:
                 self._update_course(row, course)
-                self._update_course_run(row, course_run)
-                download_and_save_course_image(course, row['image'])
-                logger.info("Course and course run updated successfully")
             except Exception:  # pylint: disable=broad-except
-                logger.exception("Error occurred while updating course and course run")
+                logger.exception("Error occurred while updating course information")
                 continue
+
+            try:
+                self._update_course_run(row, course_run)
+            except Exception:  # pylint: disable=broad-except
+                logger.exception("Error occurred while updating course run information")
+                continue
+
+            try:
+                download_and_save_course_image(course, row['image'])
+            except Exception:  # pylint: disable=broad-except
+                logger.exception("Error occurred while attempting to download and course course card image")
+                continue
+
+            logger.info("Course and course run updated successfully for course key {}".format(course_key))
+        logger.info("CSV loader ingest pipeline has completed.")
 
     def _create_course_api_request_data(self, data, course_type_uuid, course_run_type_uuid):
         """
