@@ -40,22 +40,6 @@ class CSVDataLoader(AbstractDataLoader):
             logger.exception("Error opening csv file at path {}".format(csv_path))
             raise  # re-raising exception to avoid moving the code flow
 
-    def transform_dict_keys(self, data):
-        """
-        Given a data dictionary, return a new dict that has its keys transformed to
-        snake case. For example, Enrollment Track becomes enrollment_track.
-
-        Each key is stripped of whitespaces around the edges, converted to lower case,
-        and has internal spaces converted to _. This convention removes the dependency on CSV
-        headers format(Enrollment Track vs Enrollment track) and makes code flexible to ignore
-        any case sensitivity, among other things.
-        """
-        transformed_dict = {}
-        for key, value in data.items():
-            updated_key = key.strip().lower().replace(' ', '_')
-            transformed_dict[updated_key] = value
-        return transformed_dict
-
     def ingest(self):
         logger.info("Initiating CSV data loader flow.")
         for row in self.reader:
@@ -131,10 +115,7 @@ class CSVDataLoader(AbstractDataLoader):
         Given a data dictionary, return a reduced data representation in dict
         which will be used as input for course creation via course api.
         """
-        pricing = {
-            'verified': data['verified_price'],  # TODO: temporary value to verified
-            # Actual value from course type -> entitlement_tracks -> slugs
-        }
+        pricing = self.get_pricing_representation(data['verified_price'])
 
         # TODO: make appropriate timezone adjustment when it is confirmed if time values are in EST or UTC
         course_run_creation_fields = {
@@ -142,7 +123,7 @@ class CSVDataLoader(AbstractDataLoader):
             'start': self.get_formatted_datetime_string(f"{data['start_date']} {data['start_time']}"),
             'end': self.get_formatted_datetime_string(f"{data['end_date']} {data['end_time']}"),
             'run_type': str(course_run_type_uuid),
-            'prices': pricing
+            'prices': pricing,
         }
         return {
             'org': data['organization'],
@@ -157,39 +138,22 @@ class CSVDataLoader(AbstractDataLoader):
         """
         Create and return the request data for making a patch call to update the course.
         """
-        subjects = [
+        collaborator_uuids = self.process_collaborators(data['collaborators'], course.key)
+        subjects = self.get_subject_slugs(
             data.get('primary_subject'),
             data.get('secondary_subject'),
             data.get('tertiary_subject')
-        ]
-        # Transform subject names into slugs
-        subjects = [subject.lower().replace(' ', '-') for subject in subjects if subject]
-        subjects = list(set(subjects))
-
-        collaborators = data['collaborators'].split(',')
-        collaborators = [collaborator for collaborator in collaborators if collaborator.strip()]
-        collaborator_uuids = []
-        for collaborator in collaborators:
-            collaborator_obj, created = Collaborator.objects.get_or_create(name=collaborator)
-            collaborator_uuids.append(str(collaborator_obj.uuid))
-            if created:
-                logger.info("Collaborator {} created for course {}".format(collaborator, course.key))
-
-        pricing = {
-            'verified': data['verified_price'],  # TODO: temporary value to verified
-            # Actual value from course type -> entitlement_tracks -> slugs
-        }
+        )
 
         update_course_data = {
-            'uuid': str(course.uuid),
+            'draft': False,
             'key': course.key,
+            'uuid': str(course.uuid),
             'url_slug': course.url_slug,
             'type': str(course.type.uuid),
-            'draft': False,
-
-            'prices': pricing,
             'subjects': subjects,
             'collaborators': collaborator_uuids,
+            'prices': self.get_pricing_representation(data['verified_price']),
 
             'title': data['title'],
             'syllabus_raw': data['syllabus'],
@@ -209,47 +173,15 @@ class CSVDataLoader(AbstractDataLoader):
         """
         Create and return the request data for making a patch call to update the course run.
         """
-        try:
-            content_language = self.verify_and_get_language_tags(data['content_language'])
-            transcript_language = self.verify_and_get_language_tags(data['transcript_language'])
-        except Exception:
-            logger.exception(
-                "One or more languages are not valid ietf languages. "
-                "Content Language: {}, Transcript Language: {}".format(
-                    data['content_language'], data['transcript_language']
-                )
-            )
-            return
-
-        staff_names_list = data['staff'].split(',')
-        staff_names_list = [staff_name for staff_name in staff_names_list if staff_name.strip()]
-        staff_uuids = []
-
-        # TODO: This is a fragile approach. It is possible for two people to have same name within a partner.
-        # TODO: CSV would need to provide more information to identify staff members from other than names
-        for staff_name in staff_names_list:
-            person, created = Person.objects.get_or_create(
-                partner=self.partner,
-                given_name=staff_name
-            )
-            staff_uuids.append(str(person.uuid))
-            if created:
-                logger.info("Staff with name {} has been created for course run {}".format(
-                    staff_name,
-                    course_run.key
-                ))
-
-        pricing = {
-            'verified': data['verified_price'],  # TODO: temporary value to verified
-            # Actual value from course type -> entitlement_tracks -> slugs
-        }
         program_type = data['expected_program_type']
+        staff_uuids = self.process_staff_names(data['staff'], course_run.key)
+        content_language = self.verify_and_get_language_tags(data['content_language'])
+        transcript_language = self.verify_and_get_language_tags(data['transcript_language'])
 
         update_course_run_data = {
             'run_type': str(course_run.type.uuid),
             'key': course_run.key,
-
-            'prices': pricing,
+            'prices': self.get_pricing_representation(data['verified_price']),
             'staff': staff_uuids,
             'draft': False,
 
@@ -354,8 +286,91 @@ class CSVDataLoader(AbstractDataLoader):
         response.raise_for_status()
         return response.json()
 
+    def transform_dict_keys(self, data):
+        """
+        Given a data dictionary, return a new dict that has its keys transformed to
+        snake case. For example, Enrollment Track becomes enrollment_track.
+
+        Each key is stripped of whitespaces around the edges, converted to lower case,
+        and has internal spaces converted to _. This convention removes the dependency on CSV
+        headers format(Enrollment Track vs Enrollment track) and makes code flexible to ignore
+        any case sensitivity, among other things.
+        """
+        transformed_dict = {}
+        for key, value in data.items():
+            updated_key = key.strip().lower().replace(' ', '_')
+            transformed_dict[updated_key] = value
+        return transformed_dict
+
     def get_course_key(self, organization_key, number):
         """
         Given organization key and course number, return course key.
         """
         return '{org}+{number}'.format(org=organization_key, number=number)
+
+    def get_pricing_representation(self, verified_price):
+        """
+        Return dict representation of prices.
+        """
+        return {
+            'verified': verified_price,  # TODO: temporary value to verified
+            # Actual value from course type -> entitlement_tracks -> slugs
+        }
+
+    def get_subject_slugs(self, *subjects):
+        """
+        Given a list of subject names, convert the subject names into their
+        slug representation.
+        """
+        subjects = [subject.lower().replace(' ', '-') for subject in subjects if subject]
+        return list(set(subjects))
+
+    def process_collaborators(self, collaborators, course_key):
+        """
+        Given a comma-separated string of collaborator names, return the list of collaborator
+        uuids after processing.
+
+        Processing involves the following
+            * Checking if the collaborator value is valid
+            * Checking for existence of collaborator in DB
+            * Create collaborator if not present
+        """
+        collaborators = collaborators.split(',')
+        collaborators = [collaborator for collaborator in collaborators if collaborator.strip()]
+        collaborator_uuids = []
+        for collaborator in collaborators:
+            collaborator_obj, created = Collaborator.objects.get_or_create(name=collaborator)
+            collaborator_uuids.append(str(collaborator_obj.uuid))
+            if created:
+                logger.info("Collaborator {} created for course {}".format(collaborator, course_key))
+        return collaborator_uuids
+
+    def process_staff_names(self, staff_names, course_run_key):
+        """
+        Given a comma-separated string of staff names, return the list of staff
+        uuids after processing.
+
+        Processing involves the following
+            * Checking if the staff value is valid
+            * Checking for existence of staff member in DB
+            * Create staff if not present
+        """
+
+        staff_names_list = staff_names.split(',')
+        staff_names_list = [staff_name for staff_name in staff_names_list if staff_name.strip()]
+        staff_uuids = []
+
+        # TODO: This is a fragile approach. It is possible for two people to have same name within a partner.
+        # TODO: CSV would need to provide more information to identify staff members from other than names
+        for staff_name in staff_names_list:
+            person, created = Person.objects.get_or_create(
+                partner=self.partner,
+                given_name=staff_name
+            )
+            staff_uuids.append(str(person.uuid))
+            if created:
+                logger.info("Staff with name {} has been created for course run {}".format(
+                    staff_name,
+                    course_run_key
+                ))
+        return staff_uuids

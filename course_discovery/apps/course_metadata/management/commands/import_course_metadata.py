@@ -51,14 +51,18 @@ class Command(BaseCommand):
         try:
             partner = Partner.objects.get(short_code=partner_short_code)
         except Partner.DoesNotExist:
-            raise CommandError("Unable to locate partner with code {}".format(partner_short_code))
+            raise CommandError(  # pylint: disable=raise-missing-from
+                "Unable to locate partner with code {}".format(partner_short_code)
+            )
 
         try:
             loader = CSVDataLoader(partner, csv_path=csv_path)
             logger.info("Starting CSV loader import flow for partner {}".format(partner_short_code))
             loader.ingest()
-        except Exception:  # pylint: disable=broad-except
-            raise CommandError("CSV loader import could not be completed due to unexpected errors")
+        except Exception:
+            raise CommandError(  # pylint: disable=raise-missing-from
+                "CSV loader import could not be completed due to unexpected errors"
+            )
         else:
             set_api_timestamp()
             logger.info("CSV loader import flow completed.")
