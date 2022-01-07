@@ -5,6 +5,7 @@ provided a csv containing the required information.
 import csv
 import logging
 
+from django.conf import settings
 from django.db.models import Q
 from django.urls import reverse
 
@@ -88,7 +89,7 @@ class CSVDataLoader(AbstractDataLoader):
             course_key = self.get_course_key(org_key, row['number'])
 
             try:
-                # TODO: to confirm if draft based filtering is necessary or not
+                # The imported courses and course runs will not be draft.
                 course = Course.everything.get(key=course_key, partner=self.partner)
                 course_run = CourseRun.everything.get(course=course)
                 logger.info("Course {} is located in the database.".format(course_key))
@@ -105,21 +106,21 @@ class CSVDataLoader(AbstractDataLoader):
                 course_run = CourseRun.everything.get(course=course)
 
             try:
+                download_and_save_course_image(course, row['image'])
+            except Exception:  # pylint: disable=broad-except
+                # The flow is continued because course card is optional when creating or updating course
+                logger.exception("An unknown error occurred while attempting to download and course course card image")
+
+            try:
                 self._update_course(row, course)
             except Exception:  # pylint: disable=broad-except
-                logger.exception("Error occurred while updating course information")
+                logger.exception("An unknown error occurred while updating course information")
                 continue
 
             try:
                 self._update_course_run(row, course_run)
             except Exception:  # pylint: disable=broad-except
-                logger.exception("Error occurred while updating course run information")
-                continue
-
-            try:
-                download_and_save_course_image(course, row['image'])
-            except Exception:  # pylint: disable=broad-except
-                logger.exception("Error occurred while attempting to download and course course card image")
+                logger.exception("An unknown error occurred while updating course run information")
                 continue
 
             logger.info("Course and course run updated successfully for course key {}".format(course_key))
@@ -128,9 +129,7 @@ class CSVDataLoader(AbstractDataLoader):
     def _create_course_api_request_data(self, data, course_type_uuid, course_run_type_uuid):
         """
         Given a data dictionary, return a reduced data representation in dict
-        which will be used as course api request data.
-
-        TODO: update the keys in data when the actual CSV structure is confirmed.
+        which will be used as input for course creation via course api.
         """
         pricing = {
             'verified': data['verified_price'],  # TODO: temporary value to verified
@@ -156,7 +155,7 @@ class CSVDataLoader(AbstractDataLoader):
 
     def _update_course_api_request_data(self, data, course):
         """
-        Create the request data for making a patch call to update the course.
+        Create and return the request data for making a patch call to update the course.
         """
         subjects = [
             data.get('primary_subject'),
@@ -186,6 +185,7 @@ class CSVDataLoader(AbstractDataLoader):
             'key': course.key,
             'url_slug': course.url_slug,
             'type': str(course.type.uuid),
+            'draft': False,
 
             'prices': pricing,
             'subjects': subjects,
@@ -206,11 +206,9 @@ class CSVDataLoader(AbstractDataLoader):
         return update_course_data
 
     def _update_course_run_request_data(self, data, course_run):
-        # draft: true
-        # external_key: ""
-        # rerun: null
-        # status: "unpublished"
-
+        """
+        Create and return the request data for making a patch call to update the course run.
+        """
         try:
             content_language = self.verify_and_get_language_tags(data['content_language'])
             transcript_language = self.verify_and_get_language_tags(data['transcript_language'])
@@ -253,6 +251,7 @@ class CSVDataLoader(AbstractDataLoader):
 
             'prices': pricing,
             'staff': staff_uuids,
+            'draft': False,
 
             'weeks_to_complete': data['length'],
             'min_effort': data['minimum_effort'],
@@ -311,14 +310,11 @@ class CSVDataLoader(AbstractDataLoader):
     def _create_course(self, data, course_type_uuid, course_run_type_uuid):
         """
         Make a course entry through course api.
-
-        (Question: Should api call be made via client or by direct call of method of ViewSet?)
         """
         request_data = self._create_course_api_request_data(data, course_type_uuid, course_run_type_uuid)
-        # TODO: Add proper discovery base url settings
         response = self.api_client.request(
             'POST',
-            'http://localhost:18381' + reverse('api:v1:course-list'),
+            f"{settings.DISCOVERY_BASE_URL}{reverse('api:v1:course-list')}",
             json=request_data
         )
         if response.status_code != 200:
@@ -329,14 +325,14 @@ class CSVDataLoader(AbstractDataLoader):
     def _update_course(self, data, course):
         """
         Update the course data.
-
-        (Question: Should api call be made via client or by direct call of method of ViewSet?)
         """
         request_data = self._update_course_api_request_data(data, course)
         response = self.api_client.request(
             'PATCH',
-            'http://localhost:18381' + reverse('api:v1:course-detail', kwargs={'key': course.key}),
-            json=request_data)
+            f"{settings.DISCOVERY_BASE_URL}{reverse('api:v1:course-detail', kwargs={'key': course.uuid})}"
+            f"?exclude_utm=1",
+            json=request_data
+        )
         if response.status_code != 200:
             logger.info("Course update response: {}".format(response.content))
         response.raise_for_status()
@@ -345,14 +341,14 @@ class CSVDataLoader(AbstractDataLoader):
     def _update_course_run(self, data, course_run):
         """
         Update the course run data.
-
-        (Question: Should api call be made via client or by direct call of method of ViewSet?)
         """
         request_data = self._update_course_run_request_data(data, course_run)
         response = self.api_client.request(
             'PATCH',
-            'http://localhost:18381' + reverse('api:v1:course_run-detail', kwargs={'key': course_run.key}),
-            json=request_data)
+            f"{settings.DISCOVERY_BASE_URL}{reverse('api:v1:course_run-detail', kwargs={'key': course_run.key})}"
+            f"?exclude_utm=1",
+            json=request_data
+        )
         if response.status_code != 200:
             logger.info("Course run update response: {}".format(response.content))
         response.raise_for_status()
