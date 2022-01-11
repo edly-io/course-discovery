@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 class CSVDataLoader(AbstractDataLoader):
-
     PROGRAM_TYPES = [
         ProgramType.XSERIES,
         ProgramType.MASTERS,
@@ -296,8 +295,9 @@ class CSVDataLoader(AbstractDataLoader):
         """
         Complete the review phase of the course run and publish(internally by model save) if applicable.
         """
-        has_ofac_restrictions = data['course_embargo_(ofac)_restriction_text_added_to_the_faq_section'].lower() in\
-                                ['yes', '1', 'true']
+        has_ofac_restrictions = data['course_embargo_(ofac)_restriction_text_added_to_the_faq_section'].lower() in [
+            'yes', '1', 'true'
+        ]
         ofac_comment = data.get('ofac_comment', '')
         course_run.complete_review_phase(has_ofac_restrictions, ofac_comment)
 
