@@ -59,9 +59,9 @@ class Command(BaseCommand):
             loader = CSVDataLoader(partner, csv_path=csv_path)
             logger.info("Starting CSV loader import flow for partner {}".format(partner_short_code))
             loader.ingest()
-        except Exception:
+        except Exception as exc:
             raise CommandError(  # pylint: disable=raise-missing-from
-                "CSV loader import could not be completed due to unexpected errors"
+                "CSV loader import could not be completed due to unexpected errors.\n{}".format(exc)
             )
         else:
             set_api_timestamp()

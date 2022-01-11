@@ -101,11 +101,19 @@ class CSVDataLoader(AbstractDataLoader):
                 logger.exception("An unknown error occurred while updating course information")
                 continue
 
+            # No need to update the course run if the run is already in the review
+            if not course_run.in_review:
+                try:
+                    self._update_course_run(row, course_run)
+                    course_run.refresh_from_db()
+                except Exception:  # pylint: disable=broad-except
+                    logger.exception("An unknown error occurred while updating course run information")
+                    continue
+
             try:
-                self._update_course_run(row, course_run)
+                self._complete_run_review(row, course_run)
             except Exception:  # pylint: disable=broad-except
-                logger.exception("An unknown error occurred while updating course run information")
-                continue
+                logger.exception("An unknown error occurred while completing course run review")
 
             logger.info("Course and course run updated successfully for course key {}".format(course_key))
         logger.info("CSV loader ingest pipeline has completed.")
@@ -244,8 +252,7 @@ class CSVDataLoader(AbstractDataLoader):
         Make a course entry through course api.
         """
         request_data = self._create_course_api_request_data(data, course_type_uuid, course_run_type_uuid)
-        response = self.api_client.request(
-            'POST',
+        response = self.api_client.post(
             f"{settings.DISCOVERY_BASE_URL}{reverse('api:v1:course-list')}",
             json=request_data
         )
@@ -259,8 +266,7 @@ class CSVDataLoader(AbstractDataLoader):
         Update the course data.
         """
         request_data = self._update_course_api_request_data(data, course)
-        response = self.api_client.request(
-            'PATCH',
+        response = self.api_client.patch(
             f"{settings.DISCOVERY_BASE_URL}{reverse('api:v1:course-detail', kwargs={'key': course.uuid})}"
             f"?exclude_utm=1",
             json=request_data
@@ -285,6 +291,15 @@ class CSVDataLoader(AbstractDataLoader):
             logger.info("Course run update response: {}".format(response.content))
         response.raise_for_status()
         return response.json()
+
+    def _complete_run_review(self, data, course_run):
+        """
+        Complete the review phase of the course run and publish(internally by model save) if applicable.
+        """
+        has_ofac_restrictions = data['course_embargo_(ofac)_restriction_text_added_to_the_faq_section'].lower() in\
+                                ['yes', '1', 'true']
+        ofac_comment = data.get('ofac_comment', '')
+        course_run.complete_review_phase(has_ofac_restrictions, ofac_comment)
 
     def transform_dict_keys(self, data):
         """
