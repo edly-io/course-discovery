@@ -66,6 +66,7 @@ SITE_CACHE_TTL = 0
 
 # Disable throttling during most testing, as it just adds queries
 REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = ()
+REST_FRAMEWORK['TEST_REQUEST_DEFAULT_FORMAT'] = 'json'
 
 ################################### BEGIN CELERY ###################################
 

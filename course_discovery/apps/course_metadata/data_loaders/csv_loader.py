@@ -3,6 +3,7 @@ Data loader responsible for creating course and course runs entries in Database
 provided a csv containing the required information.
 """
 import csv
+import json
 import logging
 
 from django.conf import settings
@@ -88,11 +89,7 @@ class CSVDataLoader(AbstractDataLoader):
                 course = Course.everything.get(key=course_key, partner=self.partner)
                 course_run = CourseRun.everything.get(course=course)
 
-            try:
-                download_and_save_course_image(course, row['image'])
-            except Exception:  # pylint: disable=broad-except
-                # The flow is continued because course card is optional when creating or updating course
-                logger.exception("An unknown error occurred while attempting to download and course course card image")
+            download_and_save_course_image(course, row['image'])
 
             try:
                 self._update_course(row, course)
@@ -253,7 +250,9 @@ class CSVDataLoader(AbstractDataLoader):
         request_data = self._create_course_api_request_data(data, course_type_uuid, course_run_type_uuid)
         response = self.api_client.post(
             f"{settings.DISCOVERY_BASE_URL}{reverse('api:v1:course-list')}",
-            json=request_data
+            data=request_data,
+            # data=json.dumps(request_data),
+            headers={'content-type': 'application/json'}
         )
         if response.status_code != 200:
             logger.info("Course creation response: {}".format(response.content))
@@ -268,7 +267,9 @@ class CSVDataLoader(AbstractDataLoader):
         response = self.api_client.patch(
             f"{settings.DISCOVERY_BASE_URL}{reverse('api:v1:course-detail', kwargs={'key': course.uuid})}"
             f"?exclude_utm=1",
-            json=request_data
+            data=request_data,
+            # data=json.dumps(request_data),
+            headers={'content-type': 'application/json'}
         )
         if response.status_code != 200:
             logger.info("Course update response: {}".format(response.content))
@@ -280,8 +281,7 @@ class CSVDataLoader(AbstractDataLoader):
         Update the course run data.
         """
         request_data = self._update_course_run_request_data(data, course_run)
-        response = self.api_client.request(
-            'PATCH',
+        response = self.api_client.patch(
             f"{settings.DISCOVERY_BASE_URL}{reverse('api:v1:course_run-detail', kwargs={'key': course_run.key})}"
             f"?exclude_utm=1",
             json=request_data

@@ -4,15 +4,16 @@ Unit tests for CSV Data loader.
 from tempfile import NamedTemporaryFile
 from unittest import mock
 
+import responses
 import six
-from django.test import TestCase
 from testfixtures import LogCapture
 
-from course_discovery.apps.api.v1.tests.test_views.mixins import OAuth2Mixin
+from course_discovery.apps.api.v1.tests.test_views.mixins import APITestCase, OAuth2Mixin
+from course_discovery.apps.core.tests.factories import USER_PASSWORD, UserFactory
 from course_discovery.apps.course_metadata.data_loaders.csv_loader import CSVDataLoader
 from course_discovery.apps.course_metadata.data_loaders.tests import mock_data
 from course_discovery.apps.course_metadata.models import Course, CourseRun
-from course_discovery.apps.course_metadata.tests.factories import OrganizationFactory, PartnerFactory
+from course_discovery.apps.course_metadata.tests.factories import OrganizationFactory
 
 LOGGER_PATH = 'course_discovery.apps.course_metadata.data_loaders.csv_loader'
 
@@ -21,7 +22,7 @@ LOGGER_PATH = 'course_discovery.apps.course_metadata.data_loaders.csv_loader'
     'course_discovery.apps.course_metadata.data_loaders.configured_jwt_decode_handler',
     return_value={'preferred_username': 'test_username'}
 )
-class TestCSVDataLoader(OAuth2Mixin, TestCase):
+class TestCSVDataLoader(OAuth2Mixin, APITestCase):
     """
     Test Suite for CSVDataLoader.
     """
@@ -39,8 +40,9 @@ class TestCSVDataLoader(OAuth2Mixin, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.partner = PartnerFactory(lms_url='http://127.0.0.1:8000')
         self.mock_access_token()
+        self.user = UserFactory.create(username="test_user", password=USER_PASSWORD, is_staff=True)
+        self.client.login(username=self.user.username, password=USER_PASSWORD)
 
     def _write_csv(self, csv, lines_dict_list):
         """
@@ -68,6 +70,22 @@ class TestCSVDataLoader(OAuth2Mixin, TestCase):
         setup test-only organization.
         """
         OrganizationFactory(name='edx', key='edx', partner=self.partner)
+
+    def mock_ecommerce_publication(self):
+        """
+        Mock ecommerce api calls.
+        """
+        url = f'{self.partner.ecommerce_api_url}publication/'
+        responses.add(responses.POST, url, json={}, status=200)
+
+    def mock_studio_push(self):
+        """
+        Mock the studio api calls.
+        """
+        studio_url = '{root}/api/v1/course_runs/'.format(root=self.partner.studio_url.strip('/'))
+        responses.add(responses.POST, studio_url, status=200)
+        key = 'course-v1:edx+csv_123+1T2001'
+        responses.add(responses.POST, f'{studio_url}{key}/images/', status=200)
 
     def _assert_default_logs(self, log_capture):
         """
@@ -150,11 +168,14 @@ class TestCSVDataLoader(OAuth2Mixin, TestCase):
                 assert Course.objects.count() == 0
                 assert CourseRun.objects.count() == 0
 
+    @responses.activate
     def test_single_valid_row_no_image(self, jwt_decode_patch):  # pylint: disable=unused-argument
         """
         Verify that no course and course run are created for an invalid course run track type.
         """
         self._setup_organization()
+        self.mock_studio_push()
+        self.mock_ecommerce_publication()
         with NamedTemporaryFile() as csv:
             csv = self._write_csv(csv, [mock_data.VALID_COURSE_AND_COURSE_RUN_CSV_DICT])
             with LogCapture(LOGGER_PATH) as log_capture:
@@ -172,5 +193,5 @@ class TestCSVDataLoader(OAuth2Mixin, TestCase):
                         'Course key edx+csv_123 could not be found in database, creating the course.'
                     )
                 )
-                assert Course.objects.count() == 0
-                assert CourseRun.objects.count() == 0
+                assert Course.objects.count() == 1
+                assert CourseRun.objects.count() == 1
