@@ -168,6 +168,21 @@ class TestCSVDataLoader(OAuth2Mixin, APITestCase):
                 assert Course.objects.count() == 0
                 assert CourseRun.objects.count() == 0
 
+    def mock_call_course_api(self, method, url, data):
+        if method == 'POST':
+            response = self.client.post(
+                url,
+                data=data,
+                format='json'
+            )
+        elif method == 'PATCH':
+            response = self.client.patch(
+                url,
+                data=data,
+                format='json'
+            )
+        return response
+        
     @responses.activate
     def test_single_valid_row_no_image(self, jwt_decode_patch):  # pylint: disable=unused-argument
         """
@@ -179,19 +194,21 @@ class TestCSVDataLoader(OAuth2Mixin, APITestCase):
         with NamedTemporaryFile() as csv:
             csv = self._write_csv(csv, [mock_data.VALID_COURSE_AND_COURSE_RUN_CSV_DICT])
             with LogCapture(LOGGER_PATH) as log_capture:
-                loader = CSVDataLoader(self.partner, csv_path=csv.name)
-                original_client = loader.api_client
-                loader.api_client = self.client
-                loader.ingest()
-                loader.api_client = original_client
+                with mock.patch.object(
+                    CSVDataLoader,
+                    '_call_course_api',
+                    self.mock_call_course_api
+                ):
+                    loader = CSVDataLoader(self.partner, csv_path=csv.name)
+                    loader.ingest()
 
-                self._assert_default_logs(log_capture)
-                log_capture.check_present(
-                    (
-                        LOGGER_PATH,
-                        'INFO',
-                        'Course key edx+csv_123 could not be found in database, creating the course.'
+                    self._assert_default_logs(log_capture)
+                    log_capture.check_present(
+                        (
+                            LOGGER_PATH,
+                            'INFO',
+                            'Course key edx+csv_123 could not be found in database, creating the course.'
+                        )
                     )
-                )
-                assert Course.objects.count() == 1
-                assert CourseRun.objects.count() == 1
+                    assert Course.objects.count() == 1
+                    assert CourseRun.objects.count() == 1

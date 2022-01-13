@@ -247,33 +247,37 @@ class CSVDataLoader(AbstractDataLoader):
         """
         Make a course entry through course api.
         """
+        course_api_url = reverse('api:v1:course-list')
+        url = f"{settings.DISCOVERY_BASE_URL}{course_api_url}"
+
         request_data = self._create_course_api_request_data(data, course_type_uuid, course_run_type_uuid)
-        response = self.api_client.post(
-            f"{settings.DISCOVERY_BASE_URL}{reverse('api:v1:course-list')}",
-            data=request_data,
-            # data=json.dumps(request_data),
+        response = self._call_course_api('POST', url, request_data)
+        if response.status_code not in (200, 201):
+            logger.info("Course creation response: {}".format(response.content))
+
+        return response.json()
+
+    def _call_course_api(self, method, url, data):
+        response = self.api_client.request(
+            method,
+            url,
+            json=data,
             headers={'content-type': 'application/json'}
         )
-        if response.status_code != 200:
-            logger.info("Course creation response: {}".format(response.content))
         response.raise_for_status()
-        return response.json()
+        return response
 
     def _update_course(self, data, course):
         """
         Update the course data.
         """
+        course_api_url = reverse('api:v1:course-detail', kwargs={'key': course.uuid})
+        url = f"{settings.DISCOVERY_BASE_URL}{course_api_url}?exclude_utm=1"
         request_data = self._update_course_api_request_data(data, course)
-        response = self.api_client.patch(
-            f"{settings.DISCOVERY_BASE_URL}{reverse('api:v1:course-detail', kwargs={'key': course.uuid})}"
-            f"?exclude_utm=1",
-            data=request_data,
-            # data=json.dumps(request_data),
-            headers={'content-type': 'application/json'}
-        )
+        response = self._call_course_api('PATCH', url, request_data)
         if response.status_code != 200:
             logger.info("Course update response: {}".format(response.content))
-        response.raise_for_status()
+
         return response.json()
 
     def _update_course_run(self, data, course_run):
