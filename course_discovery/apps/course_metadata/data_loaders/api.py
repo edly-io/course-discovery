@@ -306,8 +306,8 @@ class EcommerceApiDataLoader(AbstractDataLoader):
 
     LOADER_MAX_RETRY = 2
 
-    def __init__(self, partner, api_url, max_workers=None, is_threadsafe=False, **kwargs):
-        super(EcommerceApiDataLoader, self).__init__(partner, api_url, max_workers, is_threadsafe, **kwargs)
+    def __init__(self, partner, api_url, max_workers=None, is_threadsafe=False, course_id=None, **kwargs):
+        super(EcommerceApiDataLoader, self).__init__(partner, api_url, max_workers, is_threadsafe, course_id, **kwargs)
         self.initial_page = 1
         self.enrollment_skus = []
         self.entitlement_skus = []
