@@ -2,6 +2,7 @@
 Views for Dataloader API.
 """
 import logging
+from time import sleep
 
 from opaque_keys.edx.keys import CourseKey
 from rest_framework import status
@@ -57,7 +58,8 @@ class EdlyDataLoaderView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        run_dataloader.delay(partner.short_code, course_id, service)
+        sleep(61)
+        # run_dataloader.delay(partner.short_code, course_id, service)
 
         return Response(
             {'message': "Course Sync'd with {}".format(service)},
