@@ -463,6 +463,7 @@ class EcommerceApiDataLoader(AbstractDataLoader):
         if self.course_id:
             sub_url += self.course_id
 
+        logger.info('------------------------ course_runs: {}{}'.format(self.api_client, sub_url))
         response = self.api_client.get(self.api_url + sub_url, params=params)
         response.raise_for_status()
         res = response.json()
@@ -481,6 +482,7 @@ class EcommerceApiDataLoader(AbstractDataLoader):
         if self.course_id:
             params['course_id'] = self.course_id
 
+        logger.info('------------------------ entitlments: {}{}'.format(self.api_client, params))
         return self.api_client.get(self.api_url + '/products/', params=params).json()
 
     def _request_enrollment_codes(self, page):
@@ -488,6 +490,7 @@ class EcommerceApiDataLoader(AbstractDataLoader):
         if self.course_id:
             params['course_id'] = self.course_id
 
+        logger.info('------------------------ enrollment_codes: {}{}'.format(self.api_client, params))
         return self.api_client.get(self.api_url + '/products/', params=params).json()
 
     def _process_course_runs(self, response):
