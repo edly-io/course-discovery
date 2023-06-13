@@ -41,11 +41,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='courseentitlement',
-<<<<<<< HEAD
-            unique_together=set([]),
-=======
             unique_together=set(),
->>>>>>> 1401e39e9d882120a410fe1bb61d21318c018a11
         ),
         migrations.RemoveField(
             model_name='courseentitlement',
@@ -101,11 +97,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='courseuserrole',
-<<<<<<< HEAD
-            unique_together=set([]),
-=======
             unique_together=set(),
->>>>>>> 1401e39e9d882120a410fe1bb61d21318c018a11
         ),
         migrations.RemoveField(
             model_name='courseuserrole',

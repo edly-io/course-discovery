@@ -38,11 +38,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('publisher', '0080_remove_publisher_waffle_switches'),
-<<<<<<< HEAD
-        ('course_metadata', '0195_initialize_course_url_slug')
-=======
         ('course_metadata', '0194_initialize_course_url_slug')
->>>>>>> 1401e39e9d882120a410fe1bb61d21318c018a11
     ]
 
     operations = [

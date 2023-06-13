@@ -110,11 +110,7 @@ class RemoveRedirectsFromCoursesCommandTests(TestCase):
     def test_cannot_remove_active_url_slug(self):
         active_url_slug = self.course1.active_url_slug
         call_command('remove_redirects_from_courses', '-url_paths',
-<<<<<<< HEAD
-                     '/course/{url_slug}'.format(url_slug=active_url_slug))
-=======
                      f'/course/{active_url_slug}')
->>>>>>> 1401e39e9d882120a410fe1bb61d21318c018a11
         self.assertEqual(self.course1.active_url_slug, active_url_slug)
 
     def test_remove_multiple_specific_same_course(self):

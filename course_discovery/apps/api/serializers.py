@@ -20,7 +20,7 @@ from drf_dynamic_fields import DynamicFieldsMixin
 from drf_haystack.serializers import HaystackFacetSerializer, HaystackSerializer, HaystackSerializerMixin
 from opaque_keys.edx.locator import CourseLocator
 from rest_framework import serializers
-from rest_framework.fields import CreateOnlyDefault, DictField, UUIDField
+from rest_framework.fields import CharField, CreateOnlyDefault, DictField, IntegerField, UUIDField
 from rest_framework.metadata import SimpleMetadata
 from rest_framework.relations import ManyRelatedField
 from rest_framework.utils.field_mapping import get_field_kwargs
