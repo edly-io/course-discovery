@@ -8,7 +8,7 @@ import stdimage.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('course_metadata', '0257_auto_20200813_1422'),
+        ('course_metadata', '0267_auto_20200813_1422'),
     ]
 
     operations = [

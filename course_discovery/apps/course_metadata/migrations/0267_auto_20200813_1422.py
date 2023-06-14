@@ -8,7 +8,7 @@ import stdimage.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('course_metadata', '0256_curriculum_membership_uniqueness'),
+        ('course_metadata', '0266_curriculum_membership_uniqueness'),
     ]
 
     operations = [

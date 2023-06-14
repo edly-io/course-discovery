@@ -11,7 +11,7 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('course_metadata', '0253_auto_20200709_1828'),
+        ('course_metadata', '0263_auto_20200709_1828'),
     ]
 
     operations = [
