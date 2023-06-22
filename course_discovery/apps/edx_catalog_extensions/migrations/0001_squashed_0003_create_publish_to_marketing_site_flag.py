@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
     ]
 
     run_before = [
-        ('course_metadata', '0247_auto_20200428_1910')
+        ('course_metadata', '0248_auto_20200428_1910')
     ]
 
     operations = [
