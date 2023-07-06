@@ -1,6 +1,7 @@
 """
 Views for Edly Sites API.
 """
+import logging
 from django.config import settings
 from django.contrib.sites.models import Site
 from rest_framework import status, viewsets, filters
@@ -15,6 +16,7 @@ from edly_discovery_app.api.v1.constants import DEFAULT_COURSE_ID, ERROR_MESSAGE
 from edly_discovery_app.api.v1.helpers import validate_partner_configurations
 from edly_discovery_app.api.v1.permissions import CanAccessSiteCreation
 
+logger = logging.getLogger(__name__)
 
 class EdlySiteViewSet(APIView):
     """
@@ -32,9 +34,12 @@ class EdlySiteViewSet(APIView):
             return Response(validations_messages, status=status.HTTP_400_BAD_REQUEST)
     
         partner = request.data.get('partner_short_code', None)
+        logger.info('Partner %s', partner)
+        logger.info('Default Course Id %s', DEFAULT_COURSE_ID.format(partner))
       
         try:
             self.discovery_site_setup()
+            logger.info('I am getting called')
             run_dataloader.delay(partner, DEFAULT_COURSE_ID.format(partner), 'lms')
             return Response(
                 {'success': ERROR_MESSAGES.get('CLIENT_SITES_SETUP_SUCCESS')},
