@@ -29,6 +29,7 @@ class EdlyDataLoaderView(APIView):
         partner = raw_data.get('partner')
         course_id = raw_data.get('course_id')
         service = raw_data.get('service')
+        logger.info('raw data %s', raw_data)
         if not any([partner, course_id, service]):
             return Response(
                 {'error': 'Missing information'},
@@ -38,6 +39,7 @@ class EdlyDataLoaderView(APIView):
         try:
             partner = Partner.objects.get(short_code=partner)
         except Partner.DoesNotExist:
+            logger.info('partner do not exists')
             return Response(
                 {'error': 'Partner does not exist'},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -45,6 +47,7 @@ class EdlyDataLoaderView(APIView):
         try:
             CourseKey.from_string(course_id)
         except:
+            logger.info('course do not exists')
             return Response(
                 {'error': 'Course id is not valid.'},
                 status=status.HTTP_400_BAD_REQUEST,
