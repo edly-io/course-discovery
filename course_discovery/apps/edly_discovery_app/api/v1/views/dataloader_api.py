@@ -29,7 +29,7 @@ class EdlyDataLoaderView(APIView):
         partner = raw_data.get('partner')
         course_id = raw_data.get('course_id')
         service = raw_data.get('service')
-        logger.info('raw data %s', raw_data)
+        logger.info('raw data %s %s', request.site, raw_data)
         if not any([partner, course_id, service]):
             return Response(
                 {'error': 'Missing information'},
