@@ -1102,6 +1102,7 @@ class WordPressApiDataLoader(AbstractDataLoader):
 
                 course_run.save()
                 self._add_course_subjects(body['categories'], course_run)
+                logger.info('wp call instructors %s', body['course_instructors'])
                 self._add_course_instructors(body['course_instructors'], course_run)
             except CourseRun.DoesNotExist:
                 logger.exception('Could not find course run [%s]', course_run_key)
