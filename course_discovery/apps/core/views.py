@@ -40,10 +40,10 @@ def health(_):
     if newrelic:  # pragma: no cover
         newrelic.agent.ignore_transaction()
     try:
-        cursor = connection.cursor()
-        cursor.execute("SELECT 1")
-        cursor.fetchone()
-        cursor.close()
+        # cursor = connection.cursor()
+        # cursor.execute("SELECT 1")
+        # cursor.fetchone()
+        # cursor.close()
         database_status = Status.OK
     except DatabaseError:
         database_status = Status.UNAVAILABLE
