@@ -1,4 +1,5 @@
 import concurrent.futures
+import json
 import logging
 import math
 import threading
@@ -19,8 +20,8 @@ from course_discovery.apps.course_metadata.choices import CourseRunPacing, Cours
 from course_discovery.apps.course_metadata.data_loaders import AbstractDataLoader
 from course_discovery.apps.course_metadata.data_loaders.course_type import calculate_course_type
 from course_discovery.apps.course_metadata.models import (
-    Course, CourseEntitlement, CourseRun, CourseRunType, CourseType, Organization, Program, ProgramType, Seat, SeatType,
-    Video
+    Course, CourseEntitlement, CourseRun, CourseRunType, CourseType, Organization, Person, Program, ProgramType, Seat,
+    SeatType, Source, Subject, SubjectTranslation, Video
 )
 from course_discovery.apps.course_metadata.toggles import BYPASS_LMS_DATA_LOADER__END_DATE_UPDATED_CHECK
 from course_discovery.apps.course_metadata.utils import push_to_ecommerce_for_course_run, subtract_deadline_delta
@@ -905,3 +906,172 @@ class ProgramsApiDataLoader(AbstractDataLoader):
             program.save()
         else:
             logger.exception('Loading the banner image %s for program %s failed', image_url, program.title)
+
+
+class WordPressApiDataLoader(AbstractDataLoader):
+    """
+    Loads course runs from the Courses API in WordPress.
+    """
+
+    def ingest(self):
+        """
+        Load courses data from the WordPress.
+        """
+        logger.info('Refreshing Courses Data from WordPress %s...',
+                    self.partner.marketing_site_api_url)
+        initial_page = 1
+        response = self._make_request(initial_page)
+        count = response['pagination']['count']
+        pages = response['pagination']['num_pages']
+        self._process_response(response)
+
+        pagerange = range(initial_page + 1, pages + 1)
+        logger.info('Looping to request all %d WordPress pages...', pages)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            if self.is_threadsafe:
+                for page in pagerange:
+                    time.sleep(30)
+                    executor.submit(self._load_data, page)
+            else:
+                for future in [executor.submit(self._make_request, page) for page in pagerange]:
+                    response = future.result()
+                    self._process_response(response)
+
+        logger.info('Retrieved %d course from %s.', count,
+                    self.partner.marketing_site_api_url)
+
+    def _make_request(self, page):
+        """
+        Send request to WordPress.
+        """
+        logger.info('Requesting WordPress course run page %d...', page)
+        params = {'page': page, 'page_size': self.PAGE_SIZE}
+        if self.course_id:
+            params['course_id'] = self.course_id
+
+        auth = requests.auth.HTTPBasicAuth(
+            settings.WORDPRESS_APP_AUTH_USERNAME,
+            settings.WORDPRESS_APP_AUTH_PASSWORD
+        )
+        response = requests.get(
+            self.api_url + '/edly/v1/course_runs/', auth=auth, params=params)
+        response.raise_for_status()
+        return response.json()
+
+    def _load_data(self, page):
+        """
+        Make a request for the given page and process the response.
+        """
+        response = self._make_request(page)
+        self._process_response(response)
+
+    def _add_course_instructors(self, course_instructors, course_run):
+        """
+        Create and add instructors to a course run.
+        """
+        course_run.staff.clear()
+        for course_instructor in course_instructors:
+            course_instructor['partner'] = course_run.course.partner
+            instructor, created = Person.objects.get_or_create(
+                id=course_instructor['marketing_id'],
+                partner=course_instructor['partner'],
+                defaults={
+                    'given_name': course_instructor['given_name'],
+                    'bio': course_instructor['bio'],
+                    'email': course_instructor['email'],
+                    'major_works': json.dumps({
+                        'profile_image_url': course_instructor['profile_image_url'],
+                        'marketing_url': course_instructor['marketing_url']
+                    })
+                }
+            )
+            if not created:
+                for key, value in course_instructor.items():
+                    setattr(instructor, key, value)
+
+            instructor.given_name = instructor.given_name.title()
+            instructor.save()
+
+            if not course_run.staff.filter(uuid=instructor.uuid).exists():
+                course_run.staff.add(instructor)
+
+    def _add_course_subjects(self, categories, course_run):
+        """
+        Create and add course subjects to a course run.
+        """
+        course_run.course.subjects.clear()
+        for category in categories:
+            subject, created = Subject.objects.get_or_create(
+                id=category['id'],
+                partner=self.partner,
+                defaults={
+                    'description': category['description'],
+                    'banner_image_url': category['permalink'],
+                    'name': category['title'],
+                    'slug': category['slug']
+                }
+            )
+
+            if not created:
+                subject.description = category['description']
+                subject.banner_image_url = category['permalink']
+                subject.name = category['title']
+                subject.slug = category['slug']
+                subject.save()
+
+            if subject and category.get('title_translations', None):
+                for language_code, translated_title in category['title_translations'].items():
+                    subject_translation, __ = SubjectTranslation.objects.get_or_create(
+                        master_id=subject.pk,
+                        language_code=language_code
+                    )
+                    subject_translation.name = translated_title if translated_title else category[
+                        'title']
+                    subject_translation.save()
+
+            course_run.course.subjects.add(subject)
+
+    def _process_course_status(self, status):
+        """
+        Helper function that process course status.
+        """
+        return CourseRunStatus.Published if status == 'publish' else CourseRunStatus.Unpublished
+
+    def _process_response(self, response):
+        """
+        Process the response from the WordPress.
+        """
+        results = response['results']
+        logger.info('Retrieved %d WordPress course runs...', len(results))
+
+        for body in results:
+            course_run_key = body['course_id']
+            try:
+                body = self.clean_strings(body)
+                course_run = CourseRun.objects.get(key__iexact=course_run_key)
+                course_run.short_description_override = body['excerpt']
+                course_run.full_description_override = body['description']
+                course_run.course_overridden = body['featured']
+                course_run.card_image_url = body['featured_image_url']
+                course_run.slug = body['slug']
+                course_run.status = self._process_course_status(body['status'])
+
+                course_run.tags.clear()
+                for tag in body['tags']:
+                    course_run.tags.add(tag)
+
+                course_run.save()
+                self._add_course_subjects(body['categories'], course_run)
+                self._add_course_instructors(
+                    body['course_instructors'], course_run)
+            except CourseRun.DoesNotExist:
+                logger.exception(
+                    'Could not find course run [%s]', course_run_key)
+            except Exception:  # pylint: disable=broad-except
+                msg = 'An error occurred while updating {course_run} from {api_url}'.format(
+                    course_run=course_run_key,
+                    api_url=self.partner.marketing_site_api_url
+                )
+                logger.exception(msg)
+                
