@@ -58,6 +58,7 @@ urlpatterns = oauth2_urlpatterns + [
     path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
     path('taggit_autosuggest/', include('taggit_autosuggest.urls')),
     path('api/', include('course_discovery.apps.learner_pathway.api.urls', namespace='learner_pathway_api')),
+    path('api/', include('course_discovery.apps.discovery_dataloader_app.urls', namespace='dataloader_api')),
 ]
 
 # edx-drf-extensions csrf app
