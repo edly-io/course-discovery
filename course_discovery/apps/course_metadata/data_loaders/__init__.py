@@ -18,7 +18,7 @@ class AbstractDataLoader(metaclass=abc.ABCMeta):
     LOADER_MAX_RETRY = 3
     PAGE_SIZE = 50
 
-    def __init__(self, partner, api_url=None, max_workers=None, is_threadsafe=False, enable_api=True):
+    def __init__(self, partner, api_url=None, max_workers=None, is_threadsafe=False, course_id=None, enable_api=True):
         """
         Arguments:
             partner (Partner): Partner which owns the APIs and data being loaded
@@ -34,6 +34,7 @@ class AbstractDataLoader(metaclass=abc.ABCMeta):
             self.api_url = api_url.strip('/') if api_url else api_url
             self.api_client = self.partner.oauth_api_client
             self.username = self.get_username_from_client(self.api_client)
+        self.course_id = course_id
 
         self.max_workers = max_workers
         self.is_threadsafe = is_threadsafe
