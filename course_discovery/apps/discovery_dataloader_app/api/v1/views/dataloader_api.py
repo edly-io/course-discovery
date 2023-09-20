@@ -4,6 +4,7 @@ Views for Dataloader API.
 import logging
 
 from discovery_dataloader_app import serializers
+from django_elasticsearch_dsl_drf.filter_backends import FilteringFilterBackend, DefaultOrderingFilterBackend
 from opaque_keys.edx.keys import CourseKey
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -79,3 +80,12 @@ class DataLoaderCourseRunViewSet(CourseRunViewSet):
 class DataLoaderCourseRunSearchViewSet(CourseRunSearchViewSet):
     detail_serializer_class = serializers.DataLoaderCourseRunSearchModelSerializer
     serializer_class = serializers.DataLoaderCourseRunSearchDocumentSerializer
+
+    filter_backends = [
+        FilteringFilterBackend,
+        DefaultOrderingFilterBackend,
+    ]
+
+    filter_fields = {
+        'published': 'published',
+    }
