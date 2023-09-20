@@ -247,6 +247,8 @@ class CoursesApiDataLoader(AbstractDataLoader):
 
         for attr, value in validated_data.items():
             if getattr(instance, attr) != value:
+                if attr == 'status':
+                    continue
                 setattr(instance, attr, value)
                 updated = True
 
@@ -270,7 +272,7 @@ class CoursesApiDataLoader(AbstractDataLoader):
             defaults.update({
                 'short_description_override': body['short_description'],
                 'video': self.get_courserun_video(body),
-                'status': CourseRunStatus.Published,
+                'status': CourseRunStatus.Unpublished,
                 'mobile_available': body.get('mobile_available') or False,
             })
 
@@ -973,6 +975,10 @@ class WordPressApiDataLoader(AbstractDataLoader):
         course_run.staff.clear()
         for course_instructor in course_instructors:
             course_instructor['partner'] = course_run.course.partner
+            course_instructor['major_works'] = json.dumps({
+                'profile_image_url': course_instructor['profile_image_url'],
+                'marketing_url': course_instructor['marketing_url']
+            })
             instructor, created = Person.objects.get_or_create(
                 id=course_instructor['marketing_id'],
                 partner=course_instructor['partner'],
@@ -980,14 +986,14 @@ class WordPressApiDataLoader(AbstractDataLoader):
                     'given_name': course_instructor['given_name'],
                     'bio': course_instructor['bio'],
                     'email': course_instructor['email'],
-                    'major_works': json.dumps({
-                        'profile_image_url': course_instructor['profile_image_url'],
-                        'marketing_url': course_instructor['marketing_url']
-                    })
+                    'major_works': course_instructor['major_works']
                 }
             )
             if not created:
                 for key, value in course_instructor.items():
+                    if key == 'profile_image_url' or key == 'marketing_url':
+                        continue
+
                     setattr(instructor, key, value)
 
             instructor.given_name = instructor.given_name.title()
@@ -1063,15 +1069,12 @@ class WordPressApiDataLoader(AbstractDataLoader):
 
                 course_run.save()
                 self._add_course_subjects(body['categories'], course_run)
-                self._add_course_instructors(
-                    body['course_instructors'], course_run)
+                self._add_course_instructors(body['course_instructors'], course_run)
             except CourseRun.DoesNotExist:
-                logger.exception(
-                    'Could not find course run [%s]', course_run_key)
+                logger.exception('Could not find course run [%s]', course_run_key)
             except Exception:  # pylint: disable=broad-except
                 msg = 'An error occurred while updating {course_run} from {api_url}'.format(
                     course_run=course_run_key,
                     api_url=self.partner.marketing_site_api_url
                 )
                 logger.exception(msg)
-                
