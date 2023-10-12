@@ -1195,7 +1195,7 @@ class Course(DraftModelMixin, PkSearchableMixin, CachedMixin, TimeStampedModel):
     outcome = NullHtmlField()
     prerequisites_raw = NullHtmlField()
     syllabus_raw = NullHtmlField()
-    card_image_url = models.URLField(null=True, blank=True)
+    card_image_url = models.URLField(null=True, blank=True, max_length=500)
     image = StdImageField(
         upload_to=UploadToFieldNamePath(populate_from='uuid', path='media/course/image'),
         blank=True,
@@ -1860,7 +1860,7 @@ class CourseRun(DraftModelMixin, CachedMixin, TimeStampedModel):
     )
 
     # TODO Ditch this, and fallback to the course
-    card_image_url = models.URLField(null=True, blank=True)
+    card_image_url = models.URLField(null=True, blank=True, max_length=500)
     video = models.ForeignKey(Video, models.CASCADE, default=None, null=True, blank=True)
     video_translation_languages = models.ManyToManyField(
         LanguageTag, blank=True, related_name='+')
