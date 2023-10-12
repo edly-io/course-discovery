@@ -78,6 +78,9 @@ class CourseRunDocument(BaseCourseDocument):
     )
     weeks_to_complete = fields.IntegerField()
 
+    course_overridden = fields.BooleanField()
+    card_image_url = fields.TextField()
+
     def prepare_aggregation_key(self, obj):
         # Aggregate CourseRuns by Course key since that is how we plan to dedup CourseRuns on the marketing site.
         return 'courserun:{}'.format(obj.course.key)

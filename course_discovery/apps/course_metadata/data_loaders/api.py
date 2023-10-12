@@ -164,6 +164,7 @@ class CoursesApiDataLoader(AbstractDataLoader):
         end_has_updated = validated_data.get('end') != run.end
         self._update_instance(official_run, validated_data, suppress_publication=True)
         self._update_instance(draft_run, validated_data, suppress_publication=True)
+        self.create_seat(official_run)
         if BYPASS_LMS_DATA_LOADER__END_DATE_UPDATED_CHECK.is_enabled() or end_has_updated:
             self._update_verified_deadline_for_course_run(official_run)
             self._update_verified_deadline_for_course_run(draft_run)
@@ -189,9 +190,27 @@ class CoursesApiDataLoader(AbstractDataLoader):
             # Start with draft version and then make official (since our utility functions expect that flow)
             defaults['course'] = course.draft_version
             draft_run = CourseRun.objects.create(**defaults, draft=True)
+            self.create_seat(draft_run)
             return draft_run.update_or_create_official_version(notify_services=False)
         else:
-            return CourseRun.objects.create(**defaults)
+            course_run = CourseRun.objects.create(**defaults)
+            self.create_seat(course_run)
+            return course_run
+
+    def create_seat(self, course_run, seat_type=Seat.HONOR):
+        if course_run.seats.count() == 0:
+            
+            try:
+                seat_type = SeatType.objects.get(slug=seat_type)
+            except SeatType.DoesNotExist:
+                msg = ('Could not find seat type {seat_type}'.format(seat_type=seat_type))
+                logger.warning(msg)
+                return
+            
+            created = course_run.seats.create(type=seat_type)
+
+            if created:
+                logger.info('Created seat for course with key [%s].', course_run.key)
 
     def get_or_create_course(self, body):
         course_run_key = CourseKey.from_string(body['id'])
@@ -265,7 +284,10 @@ class CoursesApiDataLoader(AbstractDataLoader):
             'hidden': body.get('hidden', False),
             'license': body.get('license') or '',  # license cannot be None
             'title_override': body['name'],  # we support Studio edits, even though Publisher also owns titles
-            'pacing_type': self.get_pacing_type(body)
+            'pacing_type': self.get_pacing_type(body),
+            'outcome_override': json.dumps({
+                'invitation_only': body.get('invitation_only'),
+            })
         }
 
         if not self.partner.uses_publisher:
