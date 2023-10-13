@@ -2975,7 +2975,7 @@ class Program(PkSearchableMixin, TimeStampedModel):
     @property
     def marketing_url(self):
         if self.marketing_slug:
-            path = f'{self.type.slug.lower()}/{self.marketing_slug}'
+            path = f'program/{self.marketing_slug}'
             return urljoin(self.partner.marketing_site_url_root, path)
 
         return None

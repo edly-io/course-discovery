@@ -13,7 +13,7 @@ class DataLoaderCourseRunWithProgramsSerializer(CourseRunWithProgramsSerializer)
     featured = serializers.ReadOnlyField(source='course_overridden')
 
     class Meta(CourseRunWithProgramsSerializer.Meta):
-        fields = CourseRunWithProgramsSerializer.Meta.fields + ('featured', 'card_image_url',)
+        fields = CourseRunWithProgramsSerializer.Meta.fields + ('featured', )
         read_only_fields = ('card_image_url',)
 
 
