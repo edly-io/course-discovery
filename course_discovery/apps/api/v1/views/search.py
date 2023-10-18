@@ -6,7 +6,7 @@ from django_elasticsearch_dsl_drf.constants import (
     LOOKUP_FILTER_RANGE, LOOKUP_FILTER_TERM, LOOKUP_FILTER_TERMS, LOOKUP_QUERY_EXCLUDE, LOOKUP_QUERY_GT,
     LOOKUP_QUERY_GTE, LOOKUP_QUERY_IN, LOOKUP_QUERY_LT, LOOKUP_QUERY_LTE
 )
-from django_elasticsearch_dsl_drf.filter_backends import DefaultOrderingFilterBackend, OrderingFilterBackend
+from django_elasticsearch_dsl_drf.filter_backends import DefaultOrderingFilterBackend, FilteringFilterBackend, MultiMatchSearchFilterBackend, OrderingFilterBackend, SearchFilterBackend
 from elasticsearch_dsl.query import Q as ESDSLQ
 from rest_framework import status, viewsets
 from rest_framework.exceptions import ValidationError
@@ -146,7 +146,29 @@ class ProgramSearchViewSet(BaseElasticsearchDocumentViewSet):
         'status': {'field': 'status', 'enabled': True},
         'seat_types': {'field': 'seat_types', 'enabled': True},
     }
+    
+    filter_backends = [
+        FilteringFilterBackend,
+        SearchFilterBackend,
+        MultiMatchSearchFilterBackend,
+        DefaultOrderingFilterBackend,
+    ]
 
+    search_fields = ('title', )
+
+    filter_fields = {
+        'published': 'published',
+        'status': 'status',
+        'partner': 'partner',
+        'title': 'title',
+        'type': {'field': 'type.raw'},
+        'uuid': 'uuid',
+    }
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({'use_full_course_serializer': True})
+        return context
 
 class BaseAggregateSearchViewSet(FacetQueryFieldsMixin, BaseElasticsearchDocumentViewSet):
     """

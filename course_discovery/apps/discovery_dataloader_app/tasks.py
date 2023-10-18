@@ -41,3 +41,19 @@ def run_dataloader(partner, course_id, service):
         LOGGER.info('Runing remove_unused indexes command ...')
         with subprocess.Popen(remove_unused_index_cmd, stdout=subprocess.PIPE, shell=True) as proc:
             LOGGER.info(proc.stdout.read())
+
+
+@shared_task
+def update_indexes(model_names=[]):
+    models = " ".join(model_names)
+    update_index_cmd = "python manage.py update_index --disable-change-limit "
+    if models:
+        update_index_cmd += '--models ' + models
+    remove_unused_index_cmd = "python manage.py remove_unused_indexes"
+    LOGGER.info('Runing update_index command ...')
+    with subprocess.Popen(update_index_cmd, stdout=subprocess.PIPE, shell=True) as proc:
+        LOGGER.info(proc.stdout.read())
+
+    LOGGER.info('Runing remove_unused indexes command ...')
+    with subprocess.Popen(remove_unused_index_cmd, stdout=subprocess.PIPE, shell=True) as proc:
+        LOGGER.info(proc.stdout.read())

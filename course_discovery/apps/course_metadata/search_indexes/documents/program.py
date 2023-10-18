@@ -74,6 +74,8 @@ class ProgramDocument(BaseDocument, OrganizationsMixin):
     is_2u_degree_program = fields.BooleanField()
     excluded_from_seo = fields.BooleanField()
     excluded_from_search = fields.BooleanField()
+    no_of_courses = fields.IntegerField(fields={'raw': fields.KeywordField()})
+    one_click_purchase_enabled = fields.BooleanField()
 
     def prepare_aggregation_key(self, obj):
         return 'program:{}'.format(obj.uuid)
@@ -120,8 +122,11 @@ class ProgramDocument(BaseDocument, OrganizationsMixin):
     def prepare_type(self, obj):
         return obj.type.name_t
 
+    def prepare_no_of_courses(self, obj):
+        return len([course_run for course_run in obj.course_runs])
+
     def get_queryset(self):
-        return super().get_queryset().select_related('type').select_related('partner')
+        return super().get_queryset().select_related('type').select_related('partner').prefetch_related('courses__course_runs')
 
     class Django:
         """
