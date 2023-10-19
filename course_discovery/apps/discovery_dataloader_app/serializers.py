@@ -18,18 +18,14 @@ class DataLoaderCourseRunWithProgramsSerializer(CourseRunWithProgramsSerializer)
 
 
 class DataLoaderCourseRunSearchDocumentSerializer(CourseRunSearchDocumentSerializer):
+
+    featured = serializers.ReadOnlyField(source='course_overridden')
+
     class Meta(CourseRunSearchDocumentSerializer.Meta):
         """ Meta options. """
 
         document = CourseRunDocument
-        fields = CourseRunSearchDocumentSerializer.Meta.fields
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        course_run = CourseRun.objects.get(id=instance.pk)
-        data['featured'] = course_run.course_overridden
-        data['card_image_url'] = course_run.card_image_url
-        return data
+        fields = CourseRunSearchDocumentSerializer.Meta.fields + ('card_image_url', 'featured', 'outcome', )
 
 
 class DataLoaderCourseRunSearchModelSerializer(

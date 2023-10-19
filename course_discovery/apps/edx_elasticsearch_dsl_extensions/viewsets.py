@@ -101,7 +101,7 @@ class CustomPageNumberPagination(PageNumberPagination):
 
 class BaseElasticsearchDocumentViewSet(mixins.DetailMixin, mixins.FacetMixin, DocumentViewSet):
     lookup_field = 'key'
-    document_uid_field = 'key'
+    document_uid_field = 'key.raw'
     pagination_class = CustomPageNumberPagination
     permission_classes = (IsAuthenticated,)
     ensure_published = True

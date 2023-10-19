@@ -9,7 +9,6 @@ urlpatterns = [
 ]
 
 router = routers.SimpleRouter()
-router.register(r'course_runs', dataloader_api.DataLoaderCourseRunViewSet, basename='course_run')
 router.register(r'search/course_runs', dataloader_api.DataLoaderCourseRunSearchViewSet, basename='search-course_runs')
 
 urlpatterns += router.urls

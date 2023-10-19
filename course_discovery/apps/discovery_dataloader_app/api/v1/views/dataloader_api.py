@@ -4,7 +4,10 @@ Views for Dataloader API.
 import logging
 
 from discovery_dataloader_app import serializers
-from django_elasticsearch_dsl_drf.filter_backends import FilteringFilterBackend, DefaultOrderingFilterBackend
+from django_elasticsearch_dsl_drf.constants import (
+    LOOKUP_FILTER_TERM, LOOKUP_FILTER_TERMS, LOOKUP_QUERY_EXCLUDE,
+)
+from django_elasticsearch_dsl_drf.filter_backends import DefaultOrderingFilterBackend, FilteringFilterBackend, MultiMatchSearchFilterBackend, SearchFilterBackend
 from opaque_keys.edx.keys import CourseKey
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -72,20 +75,28 @@ class DiscoveryDataLoaderView(APIView):
         )
 
 
-class DataLoaderCourseRunViewSet(CourseRunViewSet):
-    http_method_names = ["get"]
-    serializer_class = serializers.DataLoaderCourseRunWithProgramsSerializer
-
-
 class DataLoaderCourseRunSearchViewSet(CourseRunSearchViewSet):
     detail_serializer_class = serializers.DataLoaderCourseRunSearchModelSerializer
     serializer_class = serializers.DataLoaderCourseRunSearchDocumentSerializer
 
     filter_backends = [
         FilteringFilterBackend,
+        SearchFilterBackend,
+        MultiMatchSearchFilterBackend,
         DefaultOrderingFilterBackend,
     ]
 
+    search_fields = (
+        'title',
+        'short_description',
+        'full_description'
+    )
+
     filter_fields = {
+        'key': {'field': 'key.raw', 'lookups': [LOOKUP_FILTER_TERM, LOOKUP_FILTER_TERMS, LOOKUP_QUERY_EXCLUDE]},
         'published': 'published',
+        'availability': 'availability',
+        'featured': 'course_overridden',
+        'title': 'title',
+        'number': 'number',
     }
