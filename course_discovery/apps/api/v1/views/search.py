@@ -163,6 +163,7 @@ class ProgramSearchViewSet(BaseElasticsearchDocumentViewSet):
         'title': 'title',
         'type': {'field': 'type.raw'},
         'uuid': 'uuid',
+        'org': {'field': 'org', 'lookups': [LOOKUP_FILTER_TERM, LOOKUP_FILTER_TERMS, LOOKUP_QUERY_EXCLUDE]}
     }
 
     def get_serializer_context(self):

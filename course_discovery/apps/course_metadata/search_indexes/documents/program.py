@@ -77,6 +77,8 @@ class ProgramDocument(BaseDocument, OrganizationsMixin):
     no_of_courses = fields.IntegerField(fields={'raw': fields.KeywordField()})
     one_click_purchase_enabled = fields.BooleanField()
 
+    org = fields.KeywordField(multi=True) 
+
     def prepare_aggregation_key(self, obj):
         return 'program:{}'.format(obj.uuid)
 
@@ -124,6 +126,10 @@ class ProgramDocument(BaseDocument, OrganizationsMixin):
 
     def prepare_no_of_courses(self, obj):
         return len([course_run for course_run in obj.course_runs])
+    
+    def prepare_org(self, obj):
+        organizations = [org.key for org in obj.authoring_organizations.all()] + [org.key for org in obj.credit_backing_organizations.all()]
+        return list(set(organizations))
 
     def get_queryset(self):
         return super().get_queryset().select_related('type').select_related('partner').prefetch_related('courses__course_runs')
