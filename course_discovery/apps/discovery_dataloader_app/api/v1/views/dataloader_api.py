@@ -5,7 +5,7 @@ import logging
 
 from discovery_dataloader_app import serializers
 from django_elasticsearch_dsl_drf.constants import (
-    LOOKUP_FILTER_TERM, LOOKUP_FILTER_TERMS, LOOKUP_QUERY_EXCLUDE,
+    LOOKUP_FILTER_TERM, LOOKUP_FILTER_TERMS, LOOKUP_QUERY_EXCLUDE, LOOKUP_QUERY_IN
 )
 from django_elasticsearch_dsl_drf.filter_backends import DefaultOrderingFilterBackend, FilteringFilterBackend, MultiMatchSearchFilterBackend, SearchFilterBackend
 from opaque_keys.edx.keys import CourseKey
@@ -97,6 +97,8 @@ class DataLoaderCourseRunSearchViewSet(CourseRunSearchViewSet):
         'published': 'published',
         'availability': 'availability',
         'featured': 'course_overridden',
-        'title': 'title',
         'number': 'number',
+        'org': {'field': 'org.raw', 'lookups': [LOOKUP_FILTER_TERM, LOOKUP_FILTER_TERMS]},
+        'category': {'field': 'subjects.raw', 'lookups': [LOOKUP_FILTER_TERM, LOOKUP_FILTER_TERMS, LOOKUP_QUERY_IN]},
+       
     }
