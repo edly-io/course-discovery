@@ -1914,7 +1914,7 @@ class MinimalProgramSerializer(TaggitSerializer, FlexFieldsSerializerMixin, Base
     """
 
     authoring_organizations = MinimalOrganizationSerializer(many=True)
-    banner_image = StdImageSerializerField(allow_null=True, required=False)
+    banner_image = serializers.SerializerMethodField()
     courses = serializers.SerializerMethodField()
     type = serializers.SlugRelatedField(slug_field='slug', queryset=ProgramType.objects.all())
     type_attrs = ProgramTypeAttrsSerializer(source='type', required=False)
@@ -2056,6 +2056,16 @@ class MinimalProgramSerializer(TaggitSerializer, FlexFieldsSerializerMixin, Base
         if obj.card_image:
             return obj.card_image.url
         return obj.card_image_url
+    
+    def get_banner_image(self, obj):
+        if not obj.card_image_url:
+            return None
+        return {
+            'large': {'url' : obj.card_image_url, "width": 1440, "height": 480},
+            'medium': {'url' : obj.card_image_url, "width": 726, "height": 242},
+            'small': {'url' : obj.card_image_url, "width": 435, "height": 145},
+            'x-small': {'url' : obj.card_image_url, "width": 348, "height": 116},
+        }
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
