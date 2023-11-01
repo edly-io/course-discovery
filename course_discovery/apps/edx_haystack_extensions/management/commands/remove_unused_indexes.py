@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
+    
     backends = []
     help = 'This command will purge the oldest indexes, freeing up disk space.  This command will never delete the ' \
            'currently used index.'

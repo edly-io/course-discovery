@@ -129,6 +129,8 @@ xss-utils==0.1.3          # via -r requirements/base.in
 zipp==1.2.0               # via importlib-metadata
 zope.event==4.5.0         # via gevent
 zope.interface==5.2.0     # via gevent
+elasticsearch-dsl==7.4.1
+django-elasticsearch-dsl==8.0
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
