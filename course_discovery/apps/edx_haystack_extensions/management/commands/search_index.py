@@ -7,6 +7,7 @@ from django_elasticsearch_dsl.management.commands.search_index import Command as
 from django_elasticsearch_dsl.registries import registry
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.connections import get_connection
+from haystack import connections as haystack_connections
 
 from course_discovery.apps.core.utils import ElasticsearchUtils
 
@@ -39,7 +40,8 @@ class Command(DjangoESDSLCommand):
         from django.utils import translation  # pylint: disable=import-outside-toplevel
         translation.activate(settings.LANGUAGE_CODE)
         specified_backend = options.get('using')
-        supported_backends = tuple(settings.ELASTICSEARCH_DSL.keys())
+        # supported_backends = tuple(settings.ELASTICSEARCH_DSL.keys())
+        supported_backends = tuple(haystack_connections.connections_info.keys())
         if specified_backend and specified_backend not in supported_backends:
             msg = 'Specified backend [{0}] is not supported. Supported backends: {1}'.format(
                 specified_backend, supported_backends
@@ -49,7 +51,7 @@ class Command(DjangoESDSLCommand):
         self.backends = (specified_backend,) if specified_backend else supported_backends
         super().handle(**options)
 
-    def _create(self, models, aliases, options):
+    def _create(self, models, aliases, **options):
         for backend in self.backends:
             for index in registry.get_indices(models):
                 created_index_info = ElasticsearchUtils.create_index(index, backend)
@@ -61,16 +63,16 @@ class Command(DjangoESDSLCommand):
                 )
                 ElasticsearchUtils.set_alias(es_connection, created_index_info.alias, created_index_info.name)
 
-    def _delete(self, models, aliases, options):
+    def _delete(self, models, aliases, **options):
         # pylint: disable=protected-access
         index_names = [index._name for index in registry.get_indices(models)]
-        if not options['force']:
-            response = input(
-                "Are you sure you want to delete "
-                "the '{}' indexes? [y/N]: ".format(", ".join(index_names)))
-            if response.lower() != 'y':
-                self.stdout.write('Aborted')
-                return False
+        # if not options['force']:
+        #     response = input(
+        #         "Are you sure you want to delete "
+        #         "the '{}' indexes? [y/N]: ".format(", ".join(index_names)))
+        #     if response.lower() != 'y':
+        #         self.stdout.write('Aborted')
+        #         return False
 
         for index in registry.get_indices(models):
             try:
