@@ -36,8 +36,8 @@ sphinxcontrib-jsmath==1.0.1  # via sphinx
 sphinxcontrib-qthelp==1.0.3  # via sphinx
 sphinxcontrib-serializinghtml==1.1.4  # via sphinx
 urllib3==1.25.11          # via requests
-elasticsearch-dsl==7.4.1
-django-elasticsearch-dsl==8.0
+elasticsearch-dsl==7.0.0
+django-elasticsearch-dsl==7.1.4
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
