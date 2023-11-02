@@ -122,3 +122,8 @@ class BaseElasticsearchDocumentViewSet(mixins.DetailMixin, mixins.FacetMixin, Do
             queryset = queryset.filter('term', published=True).exclude('term', hidden=True)
 
         return queryset
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter('term', partner=self.request.site.partner.short_code)
+        return queryset

@@ -100,5 +100,4 @@ class DataLoaderCourseRunSearchViewSet(CourseRunSearchViewSet):
         'number': 'number',
         'org': {'field': 'org.raw', 'lookups': [LOOKUP_FILTER_TERM, LOOKUP_FILTER_TERMS]},
         'category': {'field': 'subjects.raw', 'lookups': [LOOKUP_FILTER_TERM, LOOKUP_FILTER_TERMS, LOOKUP_QUERY_IN]},
-       
     }
