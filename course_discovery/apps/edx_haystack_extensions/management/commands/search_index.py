@@ -6,7 +6,7 @@ from django.core.management import CommandError
 from django_elasticsearch_dsl.management.commands.search_index import Command as DjangoESDSLCommand
 from django_elasticsearch_dsl.registries import registry
 from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl.connections import get_connection
+# from elasticsearch_dsl.connections import get_connection
 from haystack import connections as haystack_connections
 
 from course_discovery.apps.core.utils import ElasticsearchUtils
@@ -55,7 +55,8 @@ class Command(DjangoESDSLCommand):
         for backend in self.backends:
             for index in registry.get_indices(models):
                 created_index_info = ElasticsearchUtils.create_index(index, backend)
-                es_connection = get_connection(backend)
+                # es_connection = get_connection(backend)
+                es_connection = haystack_connections[backend]
                 self.stdout.write(
                     'Creating index "{1}".\nSet alias "{0}" for index "{1}".'.format(
                         created_index_info.alias, created_index_info.name
