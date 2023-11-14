@@ -46,11 +46,13 @@ class Command(HaystackCommand):
         # Set the alias (from settings) to the timestamped catalog.
         run_attempts = 0
         indexes_pending = {key: '' for key in [x[1] for x in alias_mappings]}
+        logger.info('indexes pending %s', indexes_pending)
         while indexes_pending and run_attempts < 2:
             run_attempts += 1
             super().handle(**options)
 
             for backend, index, alias, record_count in alias_mappings:
+                logger.info('index name %s record count %s', index, record_count)
                 # Run a sanity check to ensure we aren't drastically changing the
                 # index, which could be indicative of a bug.
                 if index in indexes_pending and not options.get('disable_change_limit', False):
