@@ -41,6 +41,7 @@ class Command(HaystackCommand):
             record_count = self.get_record_count(backend.conn, backend.index_name)
             alias, index_name = self.prepare_backend_index(backend)
             alias_mappings.append((backend, index_name, alias, record_count))
+            logger.info('alias mapping %s', alias_mappings)
 
         # Set the alias (from settings) to the timestamped catalog.
         run_attempts = 0
