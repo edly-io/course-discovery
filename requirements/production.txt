@@ -32,7 +32,7 @@ django-extensions==3.0.9  # via -r requirements/base.in
 django-filter==2.4.0      # via -r requirements/base.in
 django-fsm==2.7.1         # via -r requirements/base.in
 django-guardian==2.3.0    # via -r requirements/base.in
-django-haystack==2.8.1      # via -r requirements/base.in, drf-haystack
+django-haystack==3.0      # via -r requirements/base.in, drf-haystack
 django-libsass==0.8       # via -r requirements/base.in
 django-model-utils==4.0.0  # via taxonomy-connector
 django-parler==2.2        # via -r requirements/base.in
@@ -54,7 +54,7 @@ djangorestframework-xml==2.0.0  # via -r requirements/base.in
 djangorestframework==3.12.2  # via -r requirements/base.in, django-rest-swagger, djangorestframework-csv, drf-extensions, drf-haystack, drf-jwt, edx-drf-extensions, rest-condition, taxonomy-connector
 drf-dynamic-fields==0.3.1  # via -r requirements/base.in
 drf-extensions==0.6.0     # via -r requirements/base.in
-drf-haystack==1.8.6       # via -r requirements/base.in
+drf-haystack==1.8.9       # via -r requirements/base.in
 drf-jwt==1.17.2           # via edx-drf-extensions
 dry-rest-permissions==0.1.10  # via -r requirements/base.in
 edx-analytics-data-api-client==0.16.1  # via -r requirements/base.in
