@@ -26,6 +26,7 @@ def run_dataloader(partner, course_id, service):
 
     dataloader, api_url = pipeline.get(service)
     LOGGER.info('Executing Loader [{}]'.format(api_url))
+    LOGGER.info('Daniyal branch daniyal/EDLY6132')
 
     dataloader(
         partner=partner,
