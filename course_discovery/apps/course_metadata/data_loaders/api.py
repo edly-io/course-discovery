@@ -113,6 +113,10 @@ class CoursesApiDataLoader(AbstractDataLoader):
     def _process_response(self, response):
         results = response['results']
         logger.info('Retrieved %d course runs...', len(results))
+        logger.info('I am getting called daniyal/EDLY6132')
+
+        for key, value in results.items():
+            logger.info('I am Body Values {}: {}'.format(key, value))
 
         for body in results:
             course_run_id = body['id']
