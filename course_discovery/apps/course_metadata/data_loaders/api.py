@@ -120,6 +120,8 @@ class CoursesApiDataLoader(AbstractDataLoader):
             try:
                 body = self.clean_strings(body)
                 official_run, draft_run = self.get_course_run(body)
+                for key, value in body.items():
+                    logger.info('I am Body Values {}: {}'.format(key, value))
                 if official_run or draft_run:
                     self.update_course_run(official_run, draft_run, body)
                     if not self.partner.uses_publisher:
