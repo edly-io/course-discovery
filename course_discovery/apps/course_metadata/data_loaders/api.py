@@ -114,6 +114,7 @@ class CoursesApiDataLoader(AbstractDataLoader):
         results = response['results']
         logger.info('Retrieved %d course runs...', len(results))
         logger.info('I am getting called daniyal/EDLY6132')
+        logger.error('I am error daniyal/EDLY6132')
 
         for key, value in results.items():
             logger.info('I am Body Values {}: {}'.format(key, value))
