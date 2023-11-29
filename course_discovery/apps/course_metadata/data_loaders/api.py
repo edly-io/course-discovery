@@ -275,6 +275,7 @@ class CoursesApiDataLoader(AbstractDataLoader):
                 'video': self.get_courserun_video(body),
                 'status': CourseRunStatus.Unpublished,
                 'mobile_available': body.get('mobile_available') or False,
+                'invite_only': body.get('invite_only') or False
             })
 
         if course:
