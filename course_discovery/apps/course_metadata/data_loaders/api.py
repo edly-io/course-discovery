@@ -122,8 +122,7 @@ class CoursesApiDataLoader(AbstractDataLoader):
             try:
                 body = self.clean_strings(body)
                 official_run, draft_run = self.get_course_run(body)
-                for key, value in body.items():
-                    logger.info('I am Body Values {}: {}'.format(key, value))
+                logger.info("invite flag {}".format(body.get('invite_only', 'No Flag Value')))
                 if official_run or draft_run:
                     self.update_course_run(official_run, draft_run, body)
                     if not self.partner.uses_publisher:
@@ -273,7 +272,6 @@ class CoursesApiDataLoader(AbstractDataLoader):
                 'video': self.get_courserun_video(body),
                 'status': CourseRunStatus.Unpublished,
                 'mobile_available': body.get('mobile_available') or False,
-                'invite_only': body.get('invite_only') or False
             })
 
         if course:
