@@ -240,12 +240,14 @@ class CoursesApiDataLoader(AbstractDataLoader):
             seat.save()
 
     def _update_instance(self, instance, validated_data, **kwargs):
+        logger.info('Instance {}'.format(instance))
         if not instance:
             return
 
         updated = False
 
         for attr, value in validated_data.items():
+            logger.info('Attr with Value {} {}'.format(attr, value))
             if getattr(instance, attr) != value:
                 setattr(instance, attr, value)
                 updated = True
