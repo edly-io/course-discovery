@@ -34,6 +34,18 @@ class EdlySiteViewSet(APIView):
       
         try:
             self.discovery_site_setup()
+            # run_dataloader(partner, DEFAULT_COURSE_ID.format(partner), 'lms')
+            # return Response(
+            #     {'success': ERROR_MESSAGES.get('CLIENT_SITES_SETUP_SUCCESS')},
+            #     status=status.HTTP_200_OK
+            # )
+        except TypeError:
+            return Response(
+                {'error': ERROR_MESSAGES.get('CLIENT_SITES_SETUP_FAILURE')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            # self.discovery_site_setup()
             run_dataloader(partner, DEFAULT_COURSE_ID.format(partner), 'lms')
             return Response(
                 {'success': ERROR_MESSAGES.get('CLIENT_SITES_SETUP_SUCCESS')},
@@ -55,6 +67,8 @@ class EdlySiteViewSet(APIView):
             domain=old_discovery_base,
             defaults={'domain': discovery_base, 'name': discovery_base[:50]},
         )
+        print('bbba ', Site.objects.all().values())
+        print('aaa--23 ', discovery_site)
         return self.get_updated_site_partner(discovery_site)
 
     def get_updated_site_partner(self, discovery_site):
