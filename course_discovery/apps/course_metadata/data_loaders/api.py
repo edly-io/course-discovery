@@ -119,6 +119,7 @@ class CoursesApiDataLoader(AbstractDataLoader):
 
             try:
                 body = self.clean_strings(body)
+                body['name'] = f'{body["org"]}-{body["name"]}'
                 official_run, draft_run = self.get_course_run(body)
                 if official_run or draft_run:
                     self.update_course_run(official_run, draft_run, body)
