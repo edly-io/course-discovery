@@ -78,7 +78,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # For each partner defined...
-        partners = Partner.objects.all()
+        partners = Partner.objects.filter(is_disabled=False)
 
         data_loader_stage = options.get('data_loader_stage')
         # If a specific partner was indicated, filter down the set
