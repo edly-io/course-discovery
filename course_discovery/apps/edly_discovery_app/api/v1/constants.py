@@ -19,3 +19,10 @@ CLIENT_SITE_SETUP_FIELDS = [
 ]
 
 DEFAULT_COURSE_ID = 'course-v1:{}+get_started_with+Edly'
+
+TRIAL_PLAN = 'trial'
+ESSENTIALS_PLAN = 'essentials'
+ELITE_PLAN = 'elite'
+TRIAL_EXPIRED_PLAN = 'trial expired'
+DEACTIVATED_PLAN = 'deactivated'
+LEGACY_PLAN = 'legacy'

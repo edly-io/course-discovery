@@ -2,15 +2,14 @@
 Views for Edly Sites API.
 """
 from django.contrib.sites.models import Site
-from rest_framework import status, viewsets, filters
-from rest_framework.authentication import SessionAuthentication
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from course_discovery.apps.core.models import Partner
 from course_discovery.apps.edly_discovery_app.tasks import run_dataloader
-from edly_discovery_app.api.v1.constants import DEFAULT_COURSE_ID, ERROR_MESSAGES
+from edly_discovery_app.api.v1.constants import DEACTIVATED_PLAN, DEFAULT_COURSE_ID, ERROR_MESSAGES
 from edly_discovery_app.api.v1.helpers import validate_partner_configurations
 from edly_discovery_app.api.v1.permissions import CanAccessSiteCreation
 
@@ -96,3 +95,24 @@ class EdlySiteViewSet(APIView):
         partner.save()
 
         return partner
+
+
+class EdlySiteConfigViewset(APIView):
+    """
+    Create Default Site and Partner Configuration.
+    """
+    permission_classes = [IsAuthenticated, CanAccessSiteCreation]
+
+    def post(self, request):
+        """
+        POST /edly_api/v1/edly_site_config/
+        """
+        site = request.site
+        site_partner = Partner.objects.get(site=site)
+        request_data = request.data.get('discovery', {})
+        current_plan = request_data.get('DJANGO_SETTINGS_OVERRIDE', {}).get('CURRENT_PLAN')
+        if current_plan == DEACTIVATED_PLAN:
+            site_partner.is_disabled = True
+            site_partner.save()
+
+        return Response('Discovery site updated successfully', status=status.HTTP_200_OK)
