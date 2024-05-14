@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 
 from course_discovery.apps.core.models import Partner
 from course_discovery.apps.edly_discovery_app.tasks import run_dataloader
-from edly_discovery_app.api.v1.constants import DEACTIVATED_PLAN, DEFAULT_COURSE_ID, ERROR_MESSAGES
+from edly_discovery_app.api.v1.constants import CoursePlans, DEFAULT_COURSE_ID, ERROR_MESSAGES
 from edly_discovery_app.api.v1.helpers import validate_partner_configurations
 from edly_discovery_app.api.v1.permissions import CanAccessSiteCreation
 
@@ -111,7 +111,7 @@ class EdlySiteConfigViewset(APIView):
         site_partner = Partner.objects.get(site=site)
         request_data = request.data.get('discovery', {})
         current_plan = request_data.get('DJANGO_SETTINGS_OVERRIDE', {}).get('CURRENT_PLAN')
-        if current_plan == DEACTIVATED_PLAN:
+        if current_plan == CoursePlans.DEACTIVATED:
             site_partner.is_disabled = True
             site_partner.save()
 
