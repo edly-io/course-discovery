@@ -35,13 +35,13 @@ def run_dataloader(partner, course_id, service):
     ).ingest()
 
     ## Removing this piece of code for monitoring index corruption issue.
-    # if service == 'wordpress':
-    #     update_index_cmd = "/edx/app/discovery/venvs/discovery/bin/python /edx/app/discovery/discovery/manage.py update_index --disable-change-limit"
-    #     remove_unused_index_cmd = "/edx/app/discovery/venvs/discovery/bin/python /edx/app/discovery/discovery/manage.py remove_unused_indexes"
-    #     LOGGER.info('Runing update_index command ...')
-    #     with subprocess.Popen(update_index_cmd, stdout=subprocess.PIPE, shell=True) as proc:
-    #         LOGGER.info(proc.stdout.read())
+    if service == 'wordpress':
+        update_index_cmd = "/edx/app/discovery/venvs/discovery/bin/python /edx/app/discovery/discovery/manage.py update_index --disable-change-limit"
+        remove_unused_index_cmd = "/edx/app/discovery/venvs/discovery/bin/python /edx/app/discovery/discovery/manage.py remove_unused_indexes"
+        LOGGER.info('Runing update_index command ...')
+        with subprocess.Popen(update_index_cmd, stdout=subprocess.PIPE, shell=True) as proc:
+            LOGGER.info(proc.stdout.read())
 
-    #     LOGGER.info('Runing remove_unused indexes command ...')
-    #     with subprocess.Popen(remove_unused_index_cmd, stdout=subprocess.PIPE, shell=True) as proc:
-    #         LOGGER.info(proc.stdout.read())
+        LOGGER.info('Runing remove_unused indexes command ...')
+        with subprocess.Popen(remove_unused_index_cmd, stdout=subprocess.PIPE, shell=True) as proc:
+            LOGGER.info(proc.stdout.read())

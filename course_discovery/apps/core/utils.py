@@ -49,6 +49,9 @@ class ElasticsearchUtils:
         index_name = f'{prefix}_{timestamp}'
         index_settings = settings.ELASTICSEARCH_INDEX_SETTINGS
         index_settings['settings']['analysis']['filter']['synonym']['synonyms'] = get_synonyms(es_connection)
+        logger.info('----------------------------------------------')
+        logger.info(index_settings)
+        logger.info('----------------------------------------------')
         es_connection.indices.create(index=index_name, body=index_settings)
         logger.info('...index [%s] created.', index_name)
         return index_name
