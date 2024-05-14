@@ -1,6 +1,8 @@
 """
 Constants for Edly Sites API.
 """
+from enum import Enum
+
 from django.utils.translation import ugettext as _
 
 ERROR_MESSAGES = {
@@ -19,3 +21,11 @@ CLIENT_SITE_SETUP_FIELDS = [
 ]
 
 DEFAULT_COURSE_ID = 'course-v1:{}+get_started_with+Edly'
+
+class CoursePlans(Enum):
+    TRIAL = 'trial'
+    ESSENTIALS = 'essentials'
+    ELITE_PLAN = 'elite'
+    TRIAL_EXPIRED = 'trial expired'
+    DEACTIVATED = 'deactivated'
+    LEGACY = 'legacy'
