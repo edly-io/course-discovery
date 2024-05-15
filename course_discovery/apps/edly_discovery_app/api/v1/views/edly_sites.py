@@ -1,6 +1,7 @@
 """
 Views for Edly Sites API.
 """
+import logging
 from django.contrib.sites.models import Site
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -13,6 +14,7 @@ from edly_discovery_app.api.v1.constants import CoursePlans, DEFAULT_COURSE_ID, 
 from edly_discovery_app.api.v1.helpers import validate_partner_configurations
 from edly_discovery_app.api.v1.permissions import CanAccessSiteCreation
 
+logger = logging.getLogger(__name__)
 
 class EdlySiteViewSet(APIView):
     """
@@ -28,21 +30,25 @@ class EdlySiteViewSet(APIView):
         validations_messages = validate_partner_configurations(request.data)
         if len(validations_messages) > 0:
             return Response(validations_messages, status=status.HTTP_400_BAD_REQUEST)
-    
-        partner = request.data.get('partner_short_code', None)
-      
+
+        request_partner = request.data.get('partner_short_code', None)
         try:
             self.discovery_site_setup()
-            run_dataloader(partner, DEFAULT_COURSE_ID.format(partner), 'lms')
-            return Response(
-                {'success': ERROR_MESSAGES.get('CLIENT_SITES_SETUP_SUCCESS')},
-                status=status.HTTP_200_OK
-            )
         except TypeError:
             return Response(
                 {'error': ERROR_MESSAGES.get('CLIENT_SITES_SETUP_FAILURE')},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        try:
+            run_dataloader(request_partner, DEFAULT_COURSE_ID.format(request_partner), 'lms')
+        except Exception as exp:
+            logger.info('Dataloader failed due to %s', str(exp))
+
+        return Response(
+            {'success': ERROR_MESSAGES.get('CLIENT_SITES_SETUP_SUCCESS')},
+            status=status.HTTP_200_OK
+        )
 
     def discovery_site_setup(self):
         """
