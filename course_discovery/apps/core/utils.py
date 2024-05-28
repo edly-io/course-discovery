@@ -46,7 +46,7 @@ class ElasticsearchUtils:
             index_name (str): Name of the new index.
         """
         timestamp = datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-        index_name = f'{prefix}_{timestamp}'
+        index_name = f'draft_{prefix}_{timestamp}'
         index_settings = settings.ELASTICSEARCH_INDEX_SETTINGS
         index_settings['settings']['analysis']['filter']['synonym']['synonyms'] = get_synonyms(es_connection)
         es_connection.indices.create(index=index_name, body=index_settings)
