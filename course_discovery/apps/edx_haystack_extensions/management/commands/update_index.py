@@ -56,14 +56,8 @@ class Command(HaystackCommand):
                     record_count_is_sane, index_info_string = self.sanity_check_new_index(
                         backend.conn, index, record_count
                     )
-                    if record_count_is_sane:
-                        self.set_alias(backend, alias, index)
-                        indexes_pending.pop(index, None)
-                    else:
+                    if not record_count_is_sane:
                         indexes_pending[index] = index_info_string
-                else:
-                    self.set_alias(backend, alias, index)
-                    indexes_pending.pop(index, None)
 
         if indexes_pending:
             raise CommandError(f'Sanity check failed for new index(es): {indexes_pending}')
@@ -129,6 +123,7 @@ class Command(HaystackCommand):
         )
         return record_count_is_sane, index_info_string
 
+    # Deprecated in favour of check_mapping_and_set_alias command
     def set_alias(self, backend, alias, index):
         """
         Points the alias to the specified index.
