@@ -1,6 +1,9 @@
 import json
 import logging
 
+from django.core.management import CommandError
+from haystack import connections as haystack_connections
+
 from django.core.management.base import BaseCommand
 
 
@@ -99,20 +102,31 @@ required_mappings = {
 
 
 class Command(BaseCommand):
-    help = "Check if all required mappings are present in the catalog file."
+    help = "Check if all required mappings are present in the catalog file and Set alieas to latest catalog"
+    backends = []
 
     def add_arguments(self, parser):
-        parser.add_argument('filename', type=str, help="The path to the catalog JSON file")
+        parser.add_argument('file_path', type=str, help="The path to the catalog JSON file")
 
     def handle(self, *args, **kwargs):
-        filename = kwargs['filename']
-        with open(filename, 'r') as file:
+        file_path = kwargs['file_path']
+
+        with open(file_path, 'r') as file:
             catalog_data = json.load(file)
 
         result = self.check_mappings(catalog_data, required_mappings)
-        
+
         style = self.style.SUCCESS if result else self.style.ERROR
-        logger.info(style(f"All required mappings present: {result}"))
+        logger.info(style(f'All required mappings present: {result}'))
+
+        try:
+            self.set_alias(file_path.split('/')[-1])
+        except Exception as e:
+            logger.info(self.style.ERROR(f'Unable to update aliases'))
+            raise CommandError(f'ERROR exceptio : {e}')
+
+        logger.info(style(f'Alias are updated to given index'))
+
 
     def check_mappings(self, catalog_data, required_mappings):
         catalog_key = list(catalog_data.keys())[0]
@@ -134,3 +148,19 @@ class Command(BaseCommand):
                     logger.info(error_style(f'Invalid value of property "{prop}": "{prop_name}"'))
                     return False
         return True
+    
+
+    def set_alias(self, index_name):
+        self.backends = list(haystack_connections.connections_info.keys())
+
+        for backend_name in self.backends:
+            connection = haystack_connections[backend_name]
+            backend = connection.get_backend()
+            alias = backend.index_name
+            body = {
+                'actions': [
+                    {'remove': {'alias': alias, 'index': '*'}},
+                    {'add': {'alias': alias, 'index': index_name}},
+                ]
+            }
+            backend.conn.indices.update_aliases(body)
