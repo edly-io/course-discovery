@@ -56,10 +56,12 @@ class Command(HaystackCommand):
                     record_count_is_sane, index_info_string = self.sanity_check_new_index(
                         backend.conn, index, record_count
                     )
-                    if record_count_is_sane:
-                        indexes_pending.pop(index, None)
-                    else:
+                    if not record_count_is_sane:
                         indexes_pending[index] = index_info_string
+                    else:
+                        indexes_pending.pop(index, None)
+                else:
+                    indexes_pending.pop(index, None)
 
         if indexes_pending:
             raise CommandError(f'Sanity check failed for new index(es): {indexes_pending}')
