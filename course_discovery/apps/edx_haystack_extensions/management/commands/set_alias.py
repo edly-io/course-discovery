@@ -119,13 +119,16 @@ class Command(BaseCommand):
         style = self.style.SUCCESS if result else self.style.ERROR
         logger.info(style(f'All required mappings present: {result}'))
 
+        if not result:
+            return False
+
         try:
             self.set_alias(file_path.split('/')[-1])
         except Exception as e:
-            logger.info(self.style.ERROR(f'Unable to update aliases'))
+            logger.info(self.style.ERROR(f'Alias are updated to given index: False'))
             raise CommandError(f'ERROR exceptio : {e}')
 
-        logger.info(style(f'Alias are updated to given index'))
+        logger.info(style(f'Alias are updated to given index: True'))
 
 
     def check_mappings(self, catalog_data, required_mappings):

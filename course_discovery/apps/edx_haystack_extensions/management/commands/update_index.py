@@ -22,6 +22,14 @@ class Command(HaystackCommand):
             help='Disables checks limiting the number of records modified.'
         )
 
+        parser.add_argument(
+            "-na",
+            "--no-update-alias",
+            action="store_false",
+            dest="update_alias_disabled",
+            help="Update aliases after creating new index.",
+        )
+
     def get_record_count(self, conn, index_name):
         return conn.count(index_name).get('count')
 
@@ -52,15 +60,21 @@ class Command(HaystackCommand):
             for backend, index, alias, record_count in alias_mappings:
                 # Run a sanity check to ensure we aren't drastically changing the
                 # index, which could be indicative of a bug.
+                update_alias_disabled = options.get('update_alias_disabled')
+
                 if index in indexes_pending and not options.get('disable_change_limit', False):
                     record_count_is_sane, index_info_string = self.sanity_check_new_index(
                         backend.conn, index, record_count
                     )
-                    if not record_count_is_sane:
-                        indexes_pending[index] = index_info_string
-                    else:
+                    if record_count_is_sane:
+                        if not update_alias_disabled:
+                            self.set_alias(backend, alias, index)
                         indexes_pending.pop(index, None)
+                    else:
+                        indexes_pending[index] = index_info_string
                 else:
+                    if not update_alias_disabled:
+                            self.set_alias(backend, alias, index)
                     indexes_pending.pop(index, None)
 
         if indexes_pending:
