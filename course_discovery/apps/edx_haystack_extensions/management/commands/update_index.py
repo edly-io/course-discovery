@@ -141,7 +141,6 @@ class Command(HaystackCommand):
         )
         return record_count_is_sane, index_info_string
 
-    # Deprecated in favour of check_mapping_and_set_alias command
     def set_alias(self, backend, alias, index):
         """
         Points the alias to the specified index.
