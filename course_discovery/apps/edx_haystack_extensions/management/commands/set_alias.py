@@ -106,7 +106,7 @@ class Command(BaseCommand):
     backends = []
 
     def add_arguments(self, parser):
-        parser.add_argument('file_path', type=str, help="The path to the catalog JSON file")
+        parser.add_argument('file_path', type=str, help="The path to the catalog JSON file (file name should match with indices name)")
 
     def handle(self, *args, **kwargs):
         file_path = kwargs['file_path']
@@ -126,7 +126,7 @@ class Command(BaseCommand):
             self.set_alias(file_path.split('/')[-1])
         except Exception as e:
             logger.info(self.style.ERROR(f'Alias are updated to given index: False'))
-            raise CommandError(f'ERROR exceptio : {e}')
+            raise CommandError(f'ERROR exception : {e}')
 
         logger.info(style(f'Alias are updated to given index: True'))
 
