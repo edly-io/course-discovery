@@ -28,12 +28,9 @@ class EdlySiteViewSet(APIView):
         validations_messages = validate_partner_configurations(request.data)
         if len(validations_messages) > 0:
             return Response(validations_messages, status=status.HTTP_400_BAD_REQUEST)
-    
-        partner = request.data.get('partner_short_code', None)
-      
+
         try:
             self.discovery_site_setup()
-            run_dataloader(partner, DEFAULT_COURSE_ID.format(partner), 'lms')
             return Response(
                 {'success': ERROR_MESSAGES.get('CLIENT_SITES_SETUP_SUCCESS')},
                 status=status.HTTP_200_OK
