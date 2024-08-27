@@ -2207,6 +2207,7 @@ class CourseFacetSerializer(BaseHaystackFacetSerializer):
 class CourseRunSearchSerializer(HaystackSerializer):
     availability = serializers.SerializerMethodField()
     first_enrollable_paid_seat_price = serializers.SerializerMethodField()
+    first_enrollable_paid_seat_currency = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
     is_enrollable = serializers.SerializerMethodField()
 
@@ -2215,6 +2216,9 @@ class CourseRunSearchSerializer(HaystackSerializer):
 
     def get_first_enrollable_paid_seat_price(self, result):
         return result.object.first_enrollable_paid_seat_price
+
+    def get_first_enrollable_paid_seat_currency(self, result):
+        return result.object.first_enrollable_paid_seat_currency
 
     def get_type(self, result):
         return result.object.type_legacy
@@ -2234,6 +2238,7 @@ class CourseRunSearchSerializer(HaystackSerializer):
             'enrollment_start',
             'first_enrollable_paid_seat_sku',
             'first_enrollable_paid_seat_price',
+            'first_enrollable_paid_seat_currency',
             'full_description',
             'go_live_date',
             'has_enrollable_seats',

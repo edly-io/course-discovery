@@ -240,6 +240,7 @@ class CourseRunIndex(BaseCourseIndex, indexes.Indexable):
     has_enrollable_paid_seats = indexes.BooleanField(null=False)
     first_enrollable_paid_seat_sku = indexes.CharField(null=True)
     first_enrollable_paid_seat_price = indexes.IntegerField(null=True)
+    first_enrollable_paid_seat_currency = indexes.CharField(null=True)
     paid_seat_enrollment_end = indexes.DateTimeField(null=True)
     license = indexes.MultiValueField(model_attr='license', faceted=True)
     has_enrollable_seats = indexes.BooleanField(model_attr='has_enrollable_seats', null=False)
@@ -287,6 +288,9 @@ class CourseRunIndex(BaseCourseIndex, indexes.Indexable):
 
     def prepare_first_enrollable_paid_seat_price(self, obj):
         return obj.first_enrollable_paid_seat_price
+
+    def prepare_first_enrollable_paid_seat_currency(self, obj):
+        return obj.first_enrollable_paid_seat_currency
 
     def prepare_is_current_and_still_upgradeable(self, obj):
         return obj.is_current_and_still_upgradeable()

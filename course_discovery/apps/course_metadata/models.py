@@ -1421,6 +1421,17 @@ class CourseRun(DraftModelMixin, CachedMixin, TimeStampedModel):
 
         price = int(seats[0].price) if seats[0].price else None
         return price
+    
+    @property
+    def first_enrollable_paid_seat_currency(self):
+        """
+        Returns currency code for first enrollable paid seat.
+        """
+        seats = sorted(self._enrollable_paid_seats(), key=self._upgrade_deadline_sort)
+        if not seats:
+            return None
+
+        return seats[0].currency.code or None
 
     def first_enrollable_paid_seat_sku(self):
         # Sort in python to avoid an additional request to the database for order_by
