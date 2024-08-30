@@ -1083,6 +1083,7 @@ class WordPressApiDataLoader(AbstractDataLoader):
                 course_run.course_job_role = body['course_job_role']
                 course_run.course_format = body['course_format']
                 course_run.course_industry_certified_training = body['course_industry_certified_training']
+                course_run.course_language = body.get('course_language', '')
                 course_run.course_owner = body['course_owner']
                 course_run.status = self._process_course_status(body['status'])
 
