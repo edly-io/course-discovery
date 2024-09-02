@@ -258,6 +258,8 @@ class CourseRunIndex(BaseCourseIndex, indexes.Indexable):
     course_job_role = indexes.CharField(model_attr='course_job_role', null=True)
     course_format = indexes.CharField(model_attr='course_format', null=True)
     course_industry_certified_training = indexes.CharField(model_attr='course_industry_certified_training', null=True)
+    course_language = indexes.CharField(model_attr='course_language', null=True)
+
     course_owner = indexes.CharField(model_attr='course_owner', null=True)
 
     def read_queryset(self, using=None):
