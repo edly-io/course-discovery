@@ -1346,6 +1346,13 @@ class CourseRun(DraftModelMixin, CachedMixin, TimeStampedModel):
         max_length=255, null=True, blank=True, verbose_name=_("Course Owner")
     )
 
+    course_language = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=_("Language of the course run"),
+    )
+
     STATUS_CHANGE_EXEMPT_FIELDS = [
         'start',
         'end',
