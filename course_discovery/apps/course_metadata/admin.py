@@ -89,7 +89,7 @@ class PersonAreaOfExpertiseInline(admin.TabularInline):
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
     form = CourseAdminForm
-    list_display = ('uuid', 'key', 'key_for_reruns', 'title', 'draft',)
+    list_display = ('uuid', 'key', 'key_for_reruns', 'title', 'draft', 'partner')
     list_filter = ('partner',)
     ordering = ('key', 'title',)
     readonly_fields = ('uuid', 'enrollment_count', 'recent_enrollment_count', 'active_url_slug', 'key', 'number')
@@ -153,7 +153,7 @@ class CourseTypeAdmin(admin.ModelAdmin):
 @admin.register(CourseRun)
 class CourseRunAdmin(admin.ModelAdmin):
     inlines = (SeatInline,)
-    list_display = ('uuid', 'key', 'external_key', 'title', 'status', 'draft',)
+    list_display = ('uuid', 'key', 'external_key', 'title', 'status', 'draft')
     list_filter = (
         'course__partner',
         'hidden',

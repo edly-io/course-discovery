@@ -90,22 +90,23 @@ class CourseRunViewSet(viewsets.ModelViewSet):
             raise PermissionDenied
 
         if edit_mode:
-            log.info('test5: {self.queryset}')
+            log.info(f'test5: {self.queryset}')
             queryset = CourseRun.objects.filter_drafts()
             queryset = CourseEditor.editable_course_runs(self.request.user, queryset)
         else:
-            log.info('test6: {self.queryset}')
+            log.info(f'test6: {self.queryset.count()}')
             queryset = self.queryset
             queryset = queryset.filter(status=CourseRunStatus.Published)
 
         if q:
-            log.info('test7: {partner.short_code}')
+            log.info(f'test7: {partner.short_code}')
             qs = SearchQuerySetWrapper(CourseRun.search(q).filter(partner=partner.short_code))
             # This is necessary to avoid issues with the filter backend.
             qs.model = self.queryset.model
             return qs
-
-        log.info('test8: {self.queryset}')
+        
+        log.info(f'test7: {partner.short_code}')
+        log.info(f'test8: {self.queryset}')
         queryset = queryset.filter(course__partner=partner)
         return self.get_serializer_class().prefetch_queryset(queryset=queryset)
 
