@@ -77,28 +77,35 @@ class CourseRunViewSet(viewsets.ModelViewSet):
               multiple: false
         """
         q = self.request.query_params.get('q')
+        log.info(f'test1 {str(q)}')
         partner = self.request.site.partner
+        log.info(f'test2 {str(partner)}')
         edit_mode = get_query_param(self.request, 'editable') or self.request.method not in SAFE_METHODS
 
         if edit_mode and q:
+            log.info(f'test3 {str(partner)}')
             raise EditableAndQUnsupported()
 
         if edit_mode and (not self.request.user.is_staff and not is_publisher_user(self.request.user)):
             raise PermissionDenied
 
         if edit_mode:
+            log.info('test5: {self.queryset}')
             queryset = CourseRun.objects.filter_drafts()
             queryset = CourseEditor.editable_course_runs(self.request.user, queryset)
         else:
+            log.info('test6: {self.queryset}')
             queryset = self.queryset
             queryset = queryset.filter(status=CourseRunStatus.Published)
 
         if q:
+            log.info('test7: {partner.short_code}')
             qs = SearchQuerySetWrapper(CourseRun.search(q).filter(partner=partner.short_code))
             # This is necessary to avoid issues with the filter backend.
             qs.model = self.queryset.model
             return qs
 
+        log.info('test8: {self.queryset}')
         queryset = queryset.filter(course__partner=partner)
         return self.get_serializer_class().prefetch_queryset(queryset=queryset)
 
