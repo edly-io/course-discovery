@@ -660,7 +660,6 @@ class CourseRunSerializerTests(MinimalCourseRunBaseTestSerializer):
             'is_marketing_price_hidden': course_run.is_marketing_price_hidden,
             'card_image_url': course_run.card_image_url,
             'subjects': [],
-            'course_language': course_run.course_language
         })
         return expected
 
