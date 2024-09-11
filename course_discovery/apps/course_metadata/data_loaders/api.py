@@ -115,6 +115,8 @@ class CoursesApiDataLoader(AbstractDataLoader):
     def _process_response(self, response):
         results = response['results']
         logger.info('Retrieved %d course runs...', len(results))
+        logger.info('I am getting called daniyal/EDLY6132')
+        logger.error('I am error daniyal/EDLY6132')
 
         for body in results:
             course_run_id = body['id']
@@ -122,6 +124,7 @@ class CoursesApiDataLoader(AbstractDataLoader):
             try:
                 body = self.clean_strings(body)
                 official_run, draft_run = self.get_course_run(body)
+                logger.info("invite flag {}".format(body.get('invite_only', 'No Flag Value')))
                 if official_run or draft_run:
                     self.update_course_run(official_run, draft_run, body)
                     if not self.partner.uses_publisher:
@@ -150,6 +153,7 @@ class CoursesApiDataLoader(AbstractDataLoader):
         """
         course_run_key = body['id']
         run = CourseRun.objects.filter_drafts(key__iexact=course_run_key).first()
+        logger.info('Invite Only Flag in get_course_run {}'.format(run.invite_only))
         if not run:
             return None, None
         elif run.draft:
@@ -189,6 +193,7 @@ class CoursesApiDataLoader(AbstractDataLoader):
             # Start with draft version and then make official (since our utility functions expect that flow)
             defaults['course'] = course.draft_version
             draft_run = CourseRun.objects.create(**defaults, draft=True)
+            logger.info('Invite Only Flag in draft_run {}'.format(draft_run.invite_only))
             return draft_run.update_or_create_official_version(notify_services=False)
         else:
             return CourseRun.objects.create(**defaults)
@@ -237,12 +242,14 @@ class CoursesApiDataLoader(AbstractDataLoader):
             seat.save()
 
     def _update_instance(self, instance, validated_data, **kwargs):
+        logger.info('Instance {}'.format(instance))
         if not instance:
             return
 
         updated = False
 
         for attr, value in validated_data.items():
+            logger.info('Attr with Value {} {}'.format(attr, value))
             if getattr(instance, attr) != value:
                 setattr(instance, attr, value)
                 updated = True
