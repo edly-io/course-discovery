@@ -2209,6 +2209,7 @@ class CourseRunSearchSerializer(HaystackSerializer):
     first_enrollable_paid_seat_price = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
     is_enrollable = serializers.SerializerMethodField()
+    seats = serializers.SerializerMethodField()
 
     def get_availability(self, result):
         return result.object.availability
@@ -2221,6 +2222,10 @@ class CourseRunSearchSerializer(HaystackSerializer):
 
     def get_is_enrollable(self, result):
         return result.object.is_enrollable
+    
+    def get_seats(self, result):
+        seats = result.object.seats.all()
+        return SeatSerializer(seats, many=True).data
 
     class Meta:
         field_aliases = COMMON_SEARCH_FIELD_ALIASES
@@ -2254,6 +2259,7 @@ class CourseRunSearchSerializer(HaystackSerializer):
             'program_types',
             'published',
             'seat_types',
+            'seats',
             'short_description',
             'staff_uuids',
             'start',
