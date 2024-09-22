@@ -2210,6 +2210,8 @@ class CourseRunSearchSerializer(HaystackSerializer):
     type = serializers.SerializerMethodField()
     is_enrollable = serializers.SerializerMethodField()
     seats = serializers.SerializerMethodField()
+    subjects = serializers.SerializerMethodField()
+    staff = serializers.SerializerMethodField()
 
     def get_availability(self, result):
         return result.object.availability
@@ -2226,6 +2228,14 @@ class CourseRunSearchSerializer(HaystackSerializer):
     def get_seats(self, result):
         seats = result.object.seats.all()
         return SeatSerializer(seats, many=True).data
+    
+    def get_subjects(self, result):
+        subjects = result.object.subjects.all()
+        return SubjectSerializer(subjects, many=True).data
+    
+    def get_staff(self, result):
+        staff = result.object.staff.all()
+        return PersonSerializer(staff, many=True).data
 
     class Meta:
         field_aliases = COMMON_SEARCH_FIELD_ALIASES
@@ -2284,7 +2294,25 @@ class CourseRunSearchSerializer(HaystackSerializer):
             'course_format',
             'course_industry_certified_training',
             'course_owner',
-            'course_language'
+            'course_language',
+            'staff',
+            'uuid',
+            'status',
+            'announcement',
+            'external_key',
+            'is_marketable',
+            'invite_only',
+            'outcome',
+            'license',
+            'hidden',
+            'reporting_type',
+            'eligible_for_financial_aid',
+            'has_ofac_restrictions',
+            'ofac_comment',
+            'enrollment_count',
+            'recent_enrollment_count',
+            'expected_program_type',
+            'expected_program_name',
         )
 
 
@@ -2315,9 +2343,43 @@ class CourseRunFacetSerializer(BaseHaystackFacetSerializer):
 
 class PersonSearchSerializer(HaystackSerializer):
     profile_image_url = serializers.SerializerMethodField()
+    areas_of_expertise = serializers.SerializerMethodField()
+    urls = serializers.SerializerMethodField()
+    urls_detailed = serializers.SerializerMethodField()
 
     def get_profile_image_url(self, result):
         return result.object.get_profile_image_url
+    
+    def get_areas_of_expertise(self, result):
+        areas = result.object.areas_of_expertise.all()
+        sorted_areas = sorted(areas, key=attrgetter('id'))
+        return [{ 'id': area.id, 'value': area.value} for area in sorted_areas]
+
+    def get_social_network_url(self, url_type, obj):
+        # filter() isn't used to avoid discarding prefetched results.
+        social_networks = [network for network in obj.person_networks.all() if network.type == url_type]
+
+        if not len(social_networks):
+            return None
+        return social_networks[0].url
+
+    def get_urls(self, result):
+        return {
+            PersonSocialNetwork.FACEBOOK: self.get_social_network_url(PersonSocialNetwork.FACEBOOK, result.object),
+            PersonSocialNetwork.TWITTER: self.get_social_network_url(PersonSocialNetwork.TWITTER, result.object),
+            PersonSocialNetwork.BLOG: self.get_social_network_url(PersonSocialNetwork.BLOG, result.object),
+        }
+
+    def get_urls_detailed(self, result):
+        networks = result.object.person_networks.all()
+        sorted_networks = sorted(networks, key=attrgetter('id'))
+        return [{
+            'id': network.id,
+            'type': network.type,
+            'title': network.title,
+            'display_title': network.display_title,
+            'url': network.url,
+        } for network in sorted_networks]
 
     @staticmethod
     def _get_default_field_kwargs(model, field):
@@ -2339,6 +2401,14 @@ class PersonSearchSerializer(HaystackSerializer):
             'marketing_id',
             'marketing_url',
             'designation',
+            'given_name',
+            'family_name',
+            'slug',
+            'email',
+            'major_works',
+            'published',
+            'phone_number',
+            'website',
         )
 
 
