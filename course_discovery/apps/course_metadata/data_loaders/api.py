@@ -23,6 +23,7 @@ from course_discovery.apps.course_metadata.models import (
     ProgramType, Seat, SeatType, Subject, SubjectTranslation, Video
 )
 from course_discovery.apps.course_metadata.utils import push_to_ecommerce_for_course_run, subtract_deadline_delta
+from course_discovery.apps.ietf_language_tags.models import LanguageTag
 
 logger = logging.getLogger(__name__)
 
@@ -270,6 +271,11 @@ class CoursesApiDataLoader(AbstractDataLoader):
                 'video': self.get_courserun_video(body),
                 'status': CourseRunStatus.Unpublished,
                 'mobile_available': body.get('mobile_available') or False,
+            })
+
+        if body.get('language') and body.get('language') != 'null':
+            defaults.update({
+                'language': LanguageTag.objects.filter(code=body.get('language')).first()
             })
 
         if course:
