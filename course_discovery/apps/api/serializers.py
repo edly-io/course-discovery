@@ -2409,6 +2409,7 @@ class PersonSearchSerializer(HaystackSerializer):
             'published',
             'phone_number',
             'website',
+            'partner'
         )
 
 
