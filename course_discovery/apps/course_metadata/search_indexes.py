@@ -261,6 +261,18 @@ class CourseRunIndex(BaseCourseIndex, indexes.Indexable):
     course_language = indexes.CharField(model_attr='course_language', null=True)
 
     course_owner = indexes.CharField(model_attr='course_owner', null=True)
+    uuid = indexes.CharField(model_attr='uuid')
+    external_key = indexes.CharField(model_attr='external_key', null=True) 
+    is_marketable = indexes.BooleanField(null=True) 
+    reporting_type = indexes.CharField(model_attr='reporting_type', null=True)  
+    eligible_for_financial_aid = indexes.BooleanField(model_attr='eligible_for_financial_aid', null=True) 
+    has_ofac_restrictions = indexes.BooleanField(model_attr='has_ofac_restrictions', null=True) 
+    ofac_comment = indexes.CharField(model_attr='ofac_comment', null=True) 
+    enrollment_count = indexes.IntegerField(model_attr='enrollment_count', null=True)  
+    recent_enrollment_count = indexes.IntegerField(model_attr='recent_enrollment_count', null=True)  
+    expected_program_type = indexes.CharField(model_attr='expected_program_type__name', null=True)  
+    expected_program_name = indexes.CharField(model_attr='expected_program_name', null=True)  
+    invite_only = indexes.BooleanField(model_attr='invite_only') 
 
     def read_queryset(self, using=None):
         # Pre-fetch all fields required by the CourseRunSearchSerializer. Unfortunately, there's
@@ -274,6 +286,9 @@ class CourseRunIndex(BaseCourseIndex, indexes.Indexable):
 
     def index_queryset(self, using=None):
         return super().index_queryset(using=using)
+
+    def prepare_is_marketable(self, obj):
+        return obj.is_marketable
 
     def prepare_aggregation_key(self, obj):
         # Aggregate CourseRuns by Course key since that is how we plan to dedup CourseRuns on the marketing site.
@@ -412,6 +427,14 @@ class PersonIndex(BaseIndex, indexes.Indexable):
     marketing_url = indexes.CharField(model_attr='marketing_url', null=True)
     designation = indexes.CharField(model_attr='designation', null=True)
     created = indexes.DateTimeField(model_attr='created')
+    given_name = indexes.CharField(model_attr='given_name')
+    family_name = indexes.CharField(model_attr='family_name', null=True)
+    slug = indexes.CharField(model_attr='slug')
+    email = indexes.CharField(model_attr='email', null=True)
+    major_works = indexes.CharField(model_attr='major_works', null=True)
+    published = indexes.BooleanField(model_attr='published')
+    phone_number = indexes.CharField(model_attr='phone_number', null=True)
+    website = indexes.CharField(model_attr='website', null=True)
 
     def prepare_aggregation_key(self, obj):
         return 'person:{}'.format(obj.uuid)
