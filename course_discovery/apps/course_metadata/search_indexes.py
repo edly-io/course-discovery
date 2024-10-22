@@ -417,7 +417,7 @@ class PersonIndex(BaseIndex, indexes.Indexable):
     uuid = indexes.CharField(model_attr='uuid')
     salutation = indexes.CharField(model_attr='salutation', null=True)
     full_name = indexes.CharField(model_attr='full_name', stored=False, indexed=False)
-    partner = indexes.CharField(null=True)
+    partner = indexes.CharField(null=True, faceted=True)
     bio = indexes.CharField(model_attr='bio', null=True)
     bio_language = indexes.CharField(model_attr='bio_language', null=True)
     get_profile_image_url = indexes.CharField(model_attr='get_profile_image_url', null=True)
@@ -444,6 +444,9 @@ class PersonIndex(BaseIndex, indexes.Indexable):
         all_organizations = [course_run.course.authoring_organizations.all() for course_run in course_runs]
         formatted_organizations = [org.key for orgs in all_organizations for org in orgs]
         return formatted_organizations
+    
+    def prepare_partner(self, obj):
+        return obj.partner.short_code
 
     def prepare_position(self, obj):
         try:

@@ -200,14 +200,13 @@ class PersonSearchViewSet(BaseHaystackViewSet):
     ordering_fields = ('created', 'full_name',)
     permission_classes = (IsAuthenticated,)
     index_models = (Person,)
-    filter_backends = (CatalogDataFilterBackend, HaystackOrderingFilter)
+    filter_backends = (filters.HaystackFilter, CatalogDataFilterBackend, HaystackOrderingFilter)
     detail_serializer_class = serializers.PersonSearchModelSerializer
     facet_serializer_class = serializers.PersonFacetSerializer
     serializer_class = serializers.PersonSearchSerializer
     ensure_published = False
     document_uid = 'uuid'
     lookup_field = 'uuid'
-
 
 class PersonTypeaheadSearchView(APIView):
     """ Typeahead for people. """
