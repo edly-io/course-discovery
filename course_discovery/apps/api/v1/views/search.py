@@ -18,6 +18,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from course_discovery.apps.api import filters, mixins, serializers
+from course_discovery.apps.api.utils import get_query_param
 from course_discovery.apps.course_metadata.choices import ProgramStatus
 from course_discovery.apps.course_metadata.models import Course, CourseRun, Person, Program
 
@@ -157,9 +158,19 @@ class ProgramSearchViewSet(BaseHaystackViewSet):
     document_uid_field = 'uuid'
     lookup_field = 'uuid'
     index_models = (Program,)
+    ordering_fields = ('created', 'start', 'title', 'title_override')
+    filter_backends = [filters.HaystackFilter, OrderingFilter]
     detail_serializer_class = serializers.ProgramSearchModelSerializer
     facet_serializer_class = serializers.ProgramFacetSerializer
     serializer_class = serializers.ProgramSearchSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        query_params = ['exclude_utm', 'use_full_course_serializer', 'published_course_runs_only',
+                        'marketable_enrollable_course_runs_with_archived']
+        for query_param in query_params:
+            context[query_param] = get_query_param(self.request, query_param)
+        return context
 
 
 class AggregateSearchViewSet(BaseHaystackViewSet, CatalogDataViewSet):
