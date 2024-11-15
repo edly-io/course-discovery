@@ -280,7 +280,7 @@ class CoursesApiDataLoader(AbstractDataLoader):
 
     def format_course_data(self, body):
         defaults = {
-            'title': body['name'],
+            'title': html.unescape(body['name']),
         }
 
         if not self.partner.uses_publisher:
@@ -851,7 +851,7 @@ class ProgramsApiDataLoader(AbstractDataLoader):
         try:
             defaults = {
                 'uuid': uuid,
-                'title': body['name'],
+                'title': html.unescape(body['name']),
                 'subtitle': body['subtitle'],
                 'type': self.XSERIES,
                 'status': body['status'],
