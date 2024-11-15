@@ -813,7 +813,8 @@ class MinimalCourseRunSerializer(DynamicFieldsMixin, TimestampModelSerializer):
         model = CourseRun
         fields = ('key', 'uuid', 'title', 'external_key', 'image', 'short_description', 'marketing_url',
                   'seats', 'start', 'end', 'go_live_date', 'enrollment_start', 'enrollment_end',
-                  'pacing_type', 'type', 'run_type', 'status', 'is_enrollable', 'is_marketable', 'term', 'subjects',)
+                  'pacing_type', 'type', 'run_type', 'status', 'is_enrollable', 'is_marketable', 'term', 'subjects',
+                  'card_image_url')
 
     def get_marketing_url(self, obj):
         include_archived = self.context.get('include_archived')
@@ -928,7 +929,7 @@ class CourseRunSerializer(MinimalCourseRunSerializer):
             'first_enrollable_paid_seat_price', 'has_ofac_restrictions', 'ofac_comment',
             'enrollment_count', 'recent_enrollment_count', 'expected_program_type', 'expected_program_name',
             'course_uuid', 'estimated_hours', 'invite_only', 'subjects',
-            'is_marketing_price_set', 'marketing_price_value', 'is_marketing_price_hidden', 'featured', 'card_image_url',
+            'is_marketing_price_set', 'marketing_price_value', 'is_marketing_price_hidden', 'featured',
             'average_rating', 'total_raters', 'yt_video_url', 'course_duration_override', 'course_difficulty',
             'course_job_role', 'course_format', 'course_industry_certified_training', 'course_owner', 'course_language'
         )
@@ -1483,6 +1484,7 @@ class MinimalProgramSerializer(DynamicFieldsMixin, BaseModelSerializer):
 
     authoring_organizations = MinimalOrganizationSerializer(many=True)
     banner_image = StdImageSerializerField(allow_null=True, required=False)
+    card_image = StdImageSerializerField(allow_null=True, required=False)
     courses = serializers.SerializerMethodField()
     type = serializers.SlugRelatedField(slug_field='slug', queryset=ProgramType.objects.all())
     type_attrs = ProgramTypeAttrsSerializer(source='type')
@@ -1512,8 +1514,8 @@ class MinimalProgramSerializer(DynamicFieldsMixin, BaseModelSerializer):
         model = Program
         fields = (
             'uuid', 'title', 'subtitle', 'type', 'type_attrs', 'status', 'marketing_slug', 'marketing_url',
-            'banner_image', 'hidden', 'courses', 'authoring_organizations', 'card_image_url',
-            'is_program_eligible_for_one_click_purchase', 'degree', 'curricula', 'marketing_hook',
+            'banner_image', 'card_image', 'hidden', 'courses', 'authoring_organizations', 'card_image_url',
+            'is_program_eligible_for_one_click_purchase', 'degree', 'curricula', 'marketing_hook', 'featured'
         )
         read_only_fields = ('uuid', 'marketing_url', 'banner_image')
 
@@ -1633,6 +1635,7 @@ class ProgramSerializer(MinimalProgramSerializer):
     marketing_slug = CharField()
     type_attrs = ProgramTypeAttrsSerializer(source='type', required=False)
     curricula = CurriculumSerializer(many=True, required=False)
+    banner_image_url = serializers.URLField(required=False, allow_null=True) 
 
     @classmethod
     def prefetch_queryset(cls, partner, queryset=None):
@@ -1678,7 +1681,7 @@ class ProgramSerializer(MinimalProgramSerializer):
             'faq', 'credit_backing_organizations', 'corporate_endorsements', 'job_outlook_items',
             'individual_endorsements', 'languages', 'transcript_languages', 'subjects', 'price_ranges',
             'staff', 'credit_redemption_overview', 'applicable_seat_types', 'instructor_ordering',
-            'enrollment_count', 'recent_enrollment_count', 'topics', 'credit_value',
+            'enrollment_count', 'recent_enrollment_count', 'topics', 'credit_value', 'banner_image_url'
         )
 
     def create(self, validated_data):
@@ -1720,6 +1723,10 @@ class ProgramSerializer(MinimalProgramSerializer):
         instance.min_hours_effort_per_week = validated_data.get('min_hours_effort_per_week', instance.min_hours_effort_per_week)
         instance.max_hours_effort_per_week = validated_data.get('max_hours_effort_per_week', instance.max_hours_effort_per_week)
         instance.marketing_slug = validated_data.get('marketing_slug', instance.marketing_slug)
+        instance.featured = validated_data.get('featured', instance.featured)
+        instance.overview = validated_data.get('overview', instance.overview)
+        instance.card_image = validated_data.get('card_image', instance.card_image)
+        instance.banner_image_url = validated_data.get('banner_image_url', instance.banner_image_url)
 
         instance.save()
 
@@ -2451,7 +2458,15 @@ class ProgramSearchSerializer(HaystackSerializer):
             'subject_uuids',
             'weeks_to_complete_max',
             'weeks_to_complete_min',
-            'search_card_display'
+            'search_card_display',
+            'num_of_courses',
+            'featured',
+            'overview',
+            'banner_image_url',
+            'bundle_price',
+            'bundle_currency',
+            'created',
+            'title_override'
         )
 
 

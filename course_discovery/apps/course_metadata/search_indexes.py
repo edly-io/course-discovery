@@ -350,6 +350,7 @@ class ProgramIndex(BaseIndex, indexes.Indexable, OrganizationsMixin):
 
     uuid = indexes.CharField(model_attr='uuid')
     title = indexes.CharField(model_attr='title', boost=TITLE_FIELD_BOOST)
+    title_override = indexes.CharField(indexed=False, stored=True)
     title_autocomplete = indexes.NgramField(model_attr='title', boost=TITLE_FIELD_BOOST)
     subtitle = indexes.CharField(model_attr='subtitle')
     type = indexes.CharField(model_attr='type__name_t', faceted=True)
@@ -375,9 +376,16 @@ class ProgramIndex(BaseIndex, indexes.Indexable, OrganizationsMixin):
     weeks_to_complete_max = indexes.IntegerField(model_attr='weeks_to_complete_max', null=True)
     language = indexes.MultiValueField(faceted=True)
     hidden = indexes.BooleanField(model_attr='hidden', faceted=True)
+    num_of_courses = indexes.IntegerField(null=True)
+    featured = indexes.BooleanField(model_attr='featured', faceted=True)
     is_program_eligible_for_one_click_purchase = indexes.BooleanField(
         model_attr='is_program_eligible_for_one_click_purchase', null=False
     )
+    overview = indexes.CharField(model_attr='overview', null=True)
+    banner_image_url = indexes.CharField(null=True)
+    bundle_price = indexes.IntegerField(null=True)
+    bundle_currency = indexes.CharField(null=True)
+    created = indexes.DateTimeField(model_attr='created', null=True, faceted=True)
 
     def prepare_aggregation_key(self, obj):
         return 'program:{}'.format(obj.uuid)
@@ -410,6 +418,32 @@ class ProgramIndex(BaseIndex, indexes.Indexable, OrganizationsMixin):
 
             return []
         return [degree.search_card_ranking, degree.search_card_cost, degree.search_card_courses]
+    
+    def prepare_num_of_courses(self, obj):
+        return obj.courses.count()
+    
+    def prepare_banner_image_url(self, obj):
+        if obj.banner_image_url:
+            return obj.banner_image_url
+        elif obj.banner_image:
+            return obj.banner_image.url
+        return None
+    
+    def prepare_bundle_price(self, obj):
+        course_runs = list(obj.course_runs)
+        return sum(
+                course_run.first_enrollable_paid_seat_price 
+                for course_run in course_runs 
+                if course_run.first_enrollable_paid_seat_price
+            )
+    
+    def prepare_bundle_currency(self, obj):
+        course_runs = list(obj.course_runs)
+        first_seat = course_runs[0].seats.first() if course_runs else None
+        return first_seat.currency.code if first_seat else None
+    
+    def prepare_title_override(self, obj):
+        return obj.title.title()
 
 
 class PersonIndex(BaseIndex, indexes.Indexable):

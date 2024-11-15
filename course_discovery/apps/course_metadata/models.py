@@ -2162,6 +2162,8 @@ class Program(PkSearchableMixin, TimeStampedModel):
         blank=True, default=0, help_text=_(
             'Number of credits a learner will earn upon successful completion of the program')
     )
+    featured = models.BooleanField(default=False)
+    
     objects = ProgramQuerySet.as_manager()
 
     history = HistoricalRecords()
@@ -2233,7 +2235,7 @@ class Program(PkSearchableMixin, TimeStampedModel):
     @property
     def marketing_url(self):
         if self.marketing_slug:
-            path = '{type}/{slug}'.format(type=self.type.slug.lower(), slug=self.marketing_slug)
+            path = 'program/{slug}'.format(slug=self.marketing_slug)
             return urljoin(self.partner.marketing_site_url_root, path)
 
         return None
