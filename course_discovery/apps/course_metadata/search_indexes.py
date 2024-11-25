@@ -272,7 +272,8 @@ class CourseRunIndex(BaseCourseIndex, indexes.Indexable):
     recent_enrollment_count = indexes.IntegerField(model_attr='recent_enrollment_count', null=True)  
     expected_program_type = indexes.CharField(model_attr='expected_program_type__name', null=True)  
     expected_program_name = indexes.CharField(model_attr='expected_program_name', null=True)  
-    invite_only = indexes.BooleanField(model_attr='invite_only') 
+    invite_only = indexes.BooleanField(model_attr='invite_only')
+    created = indexes.DateTimeField(model_attr='created', null=True, faceted=True)
 
     def read_queryset(self, using=None):
         # Pre-fetch all fields required by the CourseRunSearchSerializer. Unfortunately, there's
