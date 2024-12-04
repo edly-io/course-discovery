@@ -2320,6 +2320,7 @@ class CourseRunSearchSerializer(HaystackSerializer):
             'recent_enrollment_count',
             'expected_program_type',
             'expected_program_name',
+            'created'
         )
 
 
