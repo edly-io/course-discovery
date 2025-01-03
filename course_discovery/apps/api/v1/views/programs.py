@@ -82,7 +82,12 @@ class ProgramViewSet(CompressedCacheResponseMixin, viewsets.ModelViewSet):
         """
         data = request.data.copy()
         context = {}
-
+        if Program.objects.filter(title=data.get('title')).exists():
+          return Response(
+              {"error": f"Program with title '{data.get('title')}' already exists."}, 
+              status=status.HTTP_400_BAD_REQUEST
+          )
+          
         self.prepare_and_set_read_only_data(data, context)
 
         context['partner'] = request.site.partner
@@ -100,7 +105,13 @@ class ProgramViewSet(CompressedCacheResponseMixin, viewsets.ModelViewSet):
         """
         data = request.data.copy()
         context = {}
-        instance = Program.objects.get(uuid=kwargs.get('uuid'))
+        try:
+          instance = Program.objects.get(uuid=kwargs.get('uuid'))
+        except Program.DoesNotExist:
+          return Response(
+              {"error": f"Program with {kwargs.get('uuid')} not found"}, 
+              status=status.HTTP_404_NOT_FOUND
+          )
 
         self.prepare_and_set_read_only_data(data, context)
 
