@@ -2103,7 +2103,7 @@ class MinimalProgramSerializer(TaggitSerializer, FlexFieldsSerializerMixin, Base
         if program.order_courses_by_start_date:
             courses = self.sort_courses(program, course_runs)
         else:
-            courses = program.courses.all()
+            courses = program.courses.all().order_by('title')
 
         course_serializer = MinimalProgramCourseSerializer(
             courses,
