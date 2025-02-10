@@ -1,7 +1,11 @@
 """
 Views for Edly Sites API.
 """
+import logging
+
+from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
+from django.db import transaction
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -12,6 +16,9 @@ from course_discovery.apps.edly_discovery_app.tasks import run_dataloader
 from edly_discovery_app.api.v1.constants import CoursePlans, DEFAULT_COURSE_ID, ERROR_MESSAGES
 from edly_discovery_app.api.v1.helpers import validate_partner_configurations
 from edly_discovery_app.api.v1.permissions import CanAccessSiteCreation
+
+logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 class EdlySiteViewSet(APIView):
@@ -92,6 +99,55 @@ class EdlySiteViewSet(APIView):
         partner.save()
 
         return partner
+
+
+class EdlySiteDeletionViewSet(APIView):
+    """
+    Create Default Site and Partner Configuration.
+    """
+    permission_classes = [IsAuthenticated, CanAccessSiteCreation]
+
+    def delete_users(self, request):
+        """Delete all the sync user for a given site."""
+        user_emails = request.data.get('emails')
+        user_names = request.data.get('usernames')
+        if not all([len(user_emails), len(user_names)]):
+            logger.info(f"No user deleted for given site : {(str(request.site))}")
+            return 
+
+        users = User.objects.filter(
+            email__in=user_emails,
+            username__in=user_names
+        )
+        users.delete()
+
+    def delete_site(self, request):
+        """Delete the site and partner for a given site."""
+        site = request.site
+        # site = Site.objects.filter(name='test').first() for testing locally
+        site_partner = Partner.objects.get(site=site)
+        site_partner.delete()
+        site.delete()
+
+    def process_deletion(self, request):
+        """Process the deletion request for a given site."""
+        with transaction.atomic():
+            self.delete_users(request)
+            self.delete_site(request)
+
+    def post(self, request):
+        """
+        POST /edly_api/v1/delete_site/
+        """
+        try:
+            self.process_deletion(request)
+            return Response('Discovery data deletion was successful', status=status.HTTP_200_OK)
+        except Exception as err:
+            logger.info(f"Error deleting site: {str(err)}")
+            return Response(
+                {'error': f'{str(err)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class EdlySiteConfigViewset(APIView):
