@@ -141,7 +141,10 @@ class EdlySiteDeletionViewSet(APIView):
         """
         try:
             self.process_deletion(request)
-            return Response('Discovery data deletion was successful', status=status.HTTP_200_OK)
+            return Response(
+                {'success': 'Discovery data deletion was successful'},
+                status=status.HTTP_200_OK
+            )
         except Exception as err:
             logger.info(f"Error deleting site: {str(err)}")
             return Response(
