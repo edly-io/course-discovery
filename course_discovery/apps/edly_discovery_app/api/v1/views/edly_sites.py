@@ -129,6 +129,7 @@ class EdlySiteDeletionViewSet(APIView):
         site_partner = Partner.objects.get(site=site)
         OrganizationHistory = Organization.history.model
         OrganizationHistory.objects.filter(partner=site_partner).delete()
+        site_partner.delete()
         site.delete()
 
     def process_deletion(self, request):
