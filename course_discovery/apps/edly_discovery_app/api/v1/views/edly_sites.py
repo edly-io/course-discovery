@@ -16,6 +16,7 @@ from course_discovery.apps.edly_discovery_app.tasks import run_dataloader
 from edly_discovery_app.api.v1.constants import CoursePlans, DEFAULT_COURSE_ID, ERROR_MESSAGES
 from edly_discovery_app.api.v1.helpers import validate_partner_configurations
 from edly_discovery_app.api.v1.permissions import CanAccessSiteCreation
+from course_discovery.apps.course_metadata.models import Organization
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -126,7 +127,8 @@ class EdlySiteDeletionViewSet(APIView):
         site = request.site
         # site = Site.objects.filter(name='test').first() for testing locally
         site_partner = Partner.objects.get(site=site)
-        site_partner.delete()
+        OrganizationHistory = Organization.history.model
+        OrganizationHistory.objects.filter(partner=site_partner).delete()
         site.delete()
 
     def process_deletion(self, request):
