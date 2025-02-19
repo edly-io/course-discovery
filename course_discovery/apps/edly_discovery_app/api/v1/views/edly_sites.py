@@ -16,7 +16,7 @@ from course_discovery.apps.edly_discovery_app.tasks import run_dataloader
 from edly_discovery_app.api.v1.constants import CoursePlans, DEFAULT_COURSE_ID, ERROR_MESSAGES
 from edly_discovery_app.api.v1.helpers import validate_partner_configurations
 from edly_discovery_app.api.v1.permissions import CanAccessSiteCreation
-from course_discovery.apps.course_metadata.models import Organization
+from course_discovery.apps.course_metadata.models import Organization, Course
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -121,22 +121,29 @@ class EdlySiteDeletionViewSet(APIView):
             username__in=user_names
         )
         users.delete()
-
-    def delete_site(self, request):
-        """Delete the site and partner for a given site."""
-        site = request.site
-        # site = Site.objects.filter(name='test').first() for testing locally
-        site_partner = Partner.objects.get(site=site)
+    
+    def process_history_data(self, site, site_partner):
+        """Process the deletion of the historical data."""
         OrganizationHistory = Organization.history.model
         OrganizationHistory.objects.filter(partner=site_partner).delete()
-        site_partner.delete()
+        CourseHistory = Course.history.model
+        CourseHistory.objects.filter(partner=site_partner).delete()
+
+
+    def delete_site(self, site, partner):
+        """Delete the site and partner for a given site."""
+        partner.delete()
         site.delete()
 
     def process_deletion(self, request):
         """Process the deletion request for a given site."""
         with transaction.atomic():
+            site = request.site
+            # site = Site.objects.filter(name='test').first() # for testing locally
+            site_partner = Partner.objects.get(site=site)
+            self.process_history_data(site, site_partner)
+            self.delete_site(site, site_partner)
             self.delete_users(request)
-            self.delete_site(request)
 
     def post(self, request):
         """
