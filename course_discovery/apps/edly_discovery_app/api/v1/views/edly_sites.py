@@ -137,8 +137,7 @@ class EdlySiteDeletionViewSet(APIView):
     
     def get_current_site(self, request):
         """get current site value using domain value from request."""
-        site_url = request.data.get('delete_site_url', '').rstrip('/')
-        site_domain = site_url.replace('https://', '')
+        site_domain = request.data.get('delete_site_url', '')
         return Site.objects.get(domain=site_domain)
 
     def process_deletion(self, request):
