@@ -134,12 +134,17 @@ class EdlySiteDeletionViewSet(APIView):
         """Delete the site and partner for a given site."""
         partner.delete()
         site.delete()
+    
+    def get_current_site(self, request):
+        """get current site value using domain value from request."""
+        site_url = request.data.get('delete_site_url', '').rstrip('/')
+        site_domain = site_url.replace('https://', '')
+        return Site.objects.get(domain=site_domain)
 
     def process_deletion(self, request):
         """Process the deletion request for a given site."""
         with transaction.atomic():
-            site = request.site
-            # site = Site.objects.filter(name='test').first() # for testing locally
+            site = self.get_current_site(request)
             site_partner = Partner.objects.get(site=site)
             self.process_history_data(site, site_partner)
             self.delete_site(site, site_partner)
