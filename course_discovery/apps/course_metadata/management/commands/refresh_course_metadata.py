@@ -8,6 +8,7 @@ from django.apps import apps
 from django.core.management import BaseCommand, CommandError
 from django.db import connection
 from django.db.models.signals import post_delete, post_save
+from edly_discovery_app.dataloaders import WordPressApiDataLoader
 
 from course_discovery.apps.api.cache import api_change_receiver, set_api_timestamp
 from course_discovery.apps.core.models import Partner
@@ -138,6 +139,9 @@ class Command(BaseCommand):
             pipeline = (
                 (
                     (CoursesApiDataLoader, partner.courses_api_url, 1),
+                ),
+                (
+                    (WordPressApiDataLoader, partner.marketing_site_api_url, max_workers),
                 ),
                 (
                     (EcommerceApiDataLoader, partner.ecommerce_api_url, 1),
