@@ -99,6 +99,7 @@ class CourseRunViewSet(CompressedCacheResponseMixin, ValidElasticSearchQueryRequ
             queryset = CourseEditor.editable_course_runs(self.request.user, queryset)
         else:
             queryset = self.queryset
+            queryset = queryset.filter(status=CourseRunStatus.Published)
 
         if self.request.method == 'GET':
             queryset = queryset.exclude(restricted_run__restriction_type__in=excluded_restriction_types)
