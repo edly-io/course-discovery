@@ -287,7 +287,7 @@ class CoursesApiDataLoader(AbstractDataLoader):
             defaults.update({
                 'short_description_override': body['short_description'],
                 'video': self.get_courserun_video(body),
-                'status': CourseRunStatus.Published,
+                'status': CourseRunStatus.Unpublished,
                 'mobile_available': body.get('mobile_available') or False,
             })
 
