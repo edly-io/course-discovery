@@ -702,6 +702,9 @@ class Subject(TranslatableModel, TimeStampedModel):
                          help_text=_('Leave this field blank to have the value generated automatically.'))
 
     partner = models.ForeignKey(Partner, models.CASCADE)
+    marketing_id = models.PositiveIntegerField(
+        null=True, blank=True, help_text=_('This field contains subject post ID from marketing site.')
+    )
     marketing_url = models.URLField(null=True, blank=True)
 
     def __str__(self):
@@ -2408,6 +2411,13 @@ class CourseRun(ManageHistoryMixin, DraftModelMixin, CachedMixin, TimeStampedMod
     )
     invite_only = models.BooleanField(default=False)
     featured = models.BooleanField(default=False)
+    is_marketing_price_set = models.BooleanField(
+        default=False,
+        verbose_name=_('Price'),
+        help_text=_( 'Indicates whether the course on marketing site is marked paid')
+    )
+    marketing_price_value = models.CharField(max_length=255, null=True, blank=True, verbose_name=_('Price Value'))
+    is_marketing_price_hidden = models.BooleanField(default=False, verbose_name=_('Hide Price'))
 
     variant_id = models.UUIDField(
         blank=True, null=True, editable=True,
