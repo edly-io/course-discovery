@@ -82,6 +82,10 @@ class CourseRunDocument(BaseCourseDocument):
         analyzer=html_strip, fields={'raw': fields.KeywordField(multi=True)}, multi=True
     )
     weeks_to_complete = fields.IntegerField()
+    title_override = fields.KeywordField()
+
+    def prepare_title_override(self, obj):
+        return getattr(obj, 'title_override', None) or obj.title
 
     def prepare_aggregation_key(self, obj):
         # Aggregate CourseRuns by Course key since that is how we plan to dedup CourseRuns on the marketing site.
