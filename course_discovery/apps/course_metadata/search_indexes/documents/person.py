@@ -25,6 +25,19 @@ class PersonDocument(BaseDocument):
     organizations = fields.KeywordField(multi=True)
     position = fields.TextField(multi=True)
     salutation = fields.TextField()
+    full_name_override = fields.KeywordField()
+    marketing_id = fields.IntegerField()
+    marketing_url = fields.TextField()
+    designation = fields.TextField()
+    created = fields.DateField()
+    given_name = fields.TextField()
+    family_name = fields.TextField()
+    slug = fields.TextField()
+    email = fields.TextField()
+    major_works = fields.TextField()
+    published = fields.BooleanField()
+    phone_number = fields.TextField()
+    website = fields.TextField()
 
     def prepare_aggregation_key(self, obj):
         return 'person:{}'.format(obj.uuid)
@@ -49,6 +62,30 @@ class PersonDocument(BaseDocument):
         except Position.DoesNotExist:
             return []
         return [position.title, position.organization_override]
+    
+    def prepare_marketing_id(self, obj):
+        return getattr(obj, 'marketing_id', None)
+    
+    def prepare_marketing_url(self, obj):
+        return getattr(obj, 'marketing_url', None)
+    
+    def prepare_designation(self, obj):
+        return getattr(obj, 'designation', None)
+    
+    def prepare_family_name(self, obj):
+        return getattr(obj, 'family_name', None)
+    
+    def prepare_email(self, obj):
+        return getattr(obj, 'email', None)
+    
+    def prepare_major_works(self, obj):
+        return getattr(obj, 'major_works', None)
+    
+    def prepare_phone_number(self, obj):
+        return getattr(obj, 'phone_number', None)
+    
+    def prepare_website(self, obj):
+        return getattr(obj, 'website', None)
 
     def get_queryset(self, excluded_restriction_types=None):  # pylint: disable=unused-argument
         return super().get_queryset().select_related('bio_language')
