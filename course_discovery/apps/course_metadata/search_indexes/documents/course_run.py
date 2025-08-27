@@ -83,9 +83,25 @@ class CourseRunDocument(BaseCourseDocument):
     )
     weeks_to_complete = fields.IntegerField()
     title_override = fields.KeywordField()
+    featured = fields.BooleanField()
+    is_marketing_price_set = fields.BooleanField()
+    marketing_price_value = fields.TextField()
+    is_marketing_price_hidden = fields.BooleanField()
 
     def prepare_title_override(self, obj):
         return getattr(obj, 'title_override', None) or obj.title
+    
+    def prepare_featured(self, obj):
+        return getattr(obj, 'featured', None)
+    
+    def prepare_is_marketing_price_set(self, obj):
+        return getattr(obj, 'is_marketing_price_set', None)
+    
+    def prepare_marketing_price_value(self, obj):
+        return getattr(obj, 'marketing_price_value', None)
+    
+    def prepare_is_marketing_price_hidden(self, obj):
+        return getattr(obj, 'is_marketing_price_hidden', None)
 
     def prepare_aggregation_key(self, obj):
         # Aggregate CourseRuns by Course key since that is how we plan to dedup CourseRuns on the marketing site.
