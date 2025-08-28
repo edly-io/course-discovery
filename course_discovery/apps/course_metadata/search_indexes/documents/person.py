@@ -63,6 +63,9 @@ class PersonDocument(BaseDocument):
             return []
         return [position.title, position.organization_override]
     
+    def prepare_full_name_override(self, obj):
+        return getattr(obj, 'full_name', None)
+    
     def prepare_marketing_id(self, obj):
         return getattr(obj, 'marketing_id', None)
     
