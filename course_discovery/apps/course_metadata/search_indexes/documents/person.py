@@ -38,6 +38,17 @@ class PersonDocument(BaseDocument):
     published = fields.BooleanField()
     phone_number = fields.TextField()
     website = fields.TextField()
+    social_networks = fields.NestedField(properties={
+        'id': fields.IntegerField(),
+        'type': fields.KeywordField(),
+        'title': fields.TextField(),
+        'display_title': fields.TextField(),
+        'url': fields.TextField(),
+    })
+    areas_of_expertise = fields.NestedField(properties={
+        'id': fields.IntegerField(),
+        'value': fields.TextField(),
+    })
 
     def prepare_aggregation_key(self, obj):
         return 'person:{}'.format(obj.uuid)
@@ -89,9 +100,26 @@ class PersonDocument(BaseDocument):
     
     def prepare_website(self, obj):
         return getattr(obj, 'website', None)
+        
+    def prepare_social_networks(self, obj):
+        networks = obj.person_networks.all()
+        return [{
+            'id': network.id,
+            'type': network.type,
+            'title': network.title,
+            'display_title': network.display_title,
+            'url': network.url,
+        } for network in sorted(networks, key=lambda x: x.id)]
+    
+    def prepare_areas_of_expertise(self, obj):
+        areas = obj.areas_of_expertise.all()
+        return [{
+            'id': area.id,
+            'value': area.value,
+        } for area in sorted(areas, key=lambda x: x.id)]
 
     def get_queryset(self, excluded_restriction_types=None):  # pylint: disable=unused-argument
-        return super().get_queryset().select_related('bio_language')
+        return super().get_queryset().select_related('bio_language').prefetch_related('areas_of_expertise', 'person_networks')
 
     class Django:
         """
