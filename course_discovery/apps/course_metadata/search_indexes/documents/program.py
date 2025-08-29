@@ -73,6 +73,11 @@ class ProgramDocument(BaseDocument, OrganizationsMixin):
     excluded_from_seo = fields.BooleanField()
     excluded_from_search = fields.BooleanField()
     course_run_statuses = fields.KeywordField(multi=True)
+    title_override = fields.KeywordField()
+    created = fields.DateField()
+
+    def prepare_title_override(self, obj):
+        return obj.title.title()
 
     def prepare_aggregation_key(self, obj):
         return 'program:{}'.format(obj.uuid)
