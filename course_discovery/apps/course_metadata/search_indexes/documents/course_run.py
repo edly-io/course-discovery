@@ -90,6 +90,12 @@ class CourseRunDocument(BaseCourseDocument):
     card_image_url = fields.TextField()
     yt_video_url = fields.TextField()
     course_duration_override = fields.IntegerField()
+    course_difficulty = fields.TextField()
+    course_job_role = fields.TextField()
+    course_format = fields.TextField()
+    course_industry_certified_training = fields.TextField()
+    course_language = fields.TextField()
+    course_owner = fields.TextField()
 
     def prepare_title_override(self, obj):
         return getattr(obj, 'title_override', None) or obj.title
@@ -114,6 +120,24 @@ class CourseRunDocument(BaseCourseDocument):
     
     def prepare_course_duration_override(self, obj):
         return getattr(obj, 'course_duration_override', None)
+    
+    def prepare_course_difficulty(self, obj):
+        return getattr(obj, 'course_difficulty', None)
+    
+    def prepare_course_job_role(self, obj):
+        return getattr(obj, 'course_job_role', None)
+    
+    def prepare_course_format(self, obj):
+        return getattr(obj, 'course_format', None)
+    
+    def prepare_course_language(self, obj):
+        return getattr(obj, 'course_language', None)
+    
+    def prepare_course_owner(self, obj):
+        return getattr(obj, 'course_owner', None)
+    
+    def prepare_course_industry_certified_training(self, obj):
+        return getattr(obj, 'course_industry_certified_training', None)
 
     def prepare_aggregation_key(self, obj):
         # Aggregate CourseRuns by Course key since that is how we plan to dedup CourseRuns on the marketing site.
