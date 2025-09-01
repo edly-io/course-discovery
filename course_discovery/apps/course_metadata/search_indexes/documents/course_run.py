@@ -96,6 +96,7 @@ class CourseRunDocument(BaseCourseDocument):
     course_industry_certified_training = fields.TextField()
     course_language = fields.TextField()
     course_owner = fields.TextField()
+    created = fields.DateField()
 
     def prepare_title_override(self, obj):
         return getattr(obj, 'title_override', None) or obj.title
@@ -139,6 +140,9 @@ class CourseRunDocument(BaseCourseDocument):
     def prepare_course_industry_certified_training(self, obj):
         return getattr(obj, 'course_industry_certified_training', None)
 
+    def prepare_created(self, obj):
+        return getattr(obj, 'created', None)
+    
     def prepare_aggregation_key(self, obj):
         # Aggregate CourseRuns by Course key since that is how we plan to dedup CourseRuns on the marketing site.
         return 'courserun:{}'.format(obj.course.key)
