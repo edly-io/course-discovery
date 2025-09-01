@@ -2372,6 +2372,10 @@ class CourseRun(ManageHistoryMixin, DraftModelMixin, CachedMixin, TimeStampedMod
     marketing_price_value = models.CharField(max_length=255, null=True, blank=True, verbose_name=_('Price Value'))
     is_marketing_price_hidden = models.BooleanField(default=False, verbose_name=_('Hide Price'))
     yt_video_url = models.CharField(max_length=255, null=True, blank=True, verbose_name=_('Youtube Video URL'))
+    course_duration_override = models.PositiveIntegerField(
+        null=True, blank=True, help_text=_('This field contains override course duration value.'),
+        verbose_name=_('Course Duration Override')
+    )
 
     variant_id = models.UUIDField(
         blank=True, null=True, editable=True,
