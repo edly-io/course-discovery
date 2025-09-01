@@ -88,6 +88,7 @@ class CourseRunDocument(BaseCourseDocument):
     marketing_price_value = fields.TextField()
     is_marketing_price_hidden = fields.BooleanField()
     card_image_url = fields.TextField()
+    yt_video_url = fields.TextField()
 
     def prepare_title_override(self, obj):
         return getattr(obj, 'title_override', None) or obj.title
@@ -106,6 +107,9 @@ class CourseRunDocument(BaseCourseDocument):
 
     def prepare_card_image_url(self, obj):
         return obj.card_image_url
+
+    def prepare_yt_video_url(self, obj):
+        return getattr(obj, 'yt_video_url', None)
 
     def prepare_aggregation_key(self, obj):
         # Aggregate CourseRuns by Course key since that is how we plan to dedup CourseRuns on the marketing site.
