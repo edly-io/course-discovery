@@ -118,6 +118,9 @@ class PersonDocument(BaseDocument):
             'value': area.value,
         } for area in sorted(areas, key=lambda x: x.id)]
 
+    def prepare_get_profile_image_url(self, obj):
+        return obj.profile_image_url
+
     def get_queryset(self, excluded_restriction_types=None):  # pylint: disable=unused-argument
         return super().get_queryset().select_related('bio_language').prefetch_related('areas_of_expertise', 'person_networks')
 
