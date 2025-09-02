@@ -122,8 +122,7 @@ class FacetedFieldSearchFilterBackend(FacetedSearchFilterBackend):
                 raise ParseError('The selected query facet [{facet}] is not valid.'.format(facet=field))
 
             # Use the actual elasticsearch field name from configuration, not the facet key
-            elasticsearch_field = field_facets[field]['field']
-            _filters.append(ESDSLQ('term', **{elasticsearch_field: value}))
+            _filters.append(ESDSLQ('term', **{field: value}))
 
         queryset = queryset.query('bool', **{'filter': _filters})
         return queryset
