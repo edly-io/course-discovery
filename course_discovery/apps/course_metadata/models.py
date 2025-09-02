@@ -3586,6 +3586,7 @@ class Program(ManageHistoryMixin, PkSearchableMixin, TimeStampedModel):
         default=None,
         related_name='program',
     )
+    featured = models.BooleanField(default=False)
     program_duration_override = models.CharField(
         help_text=_(
             'Useful field to overwrite the duration of a program. It can be a text describing a period of time, '
