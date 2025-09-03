@@ -90,12 +90,12 @@ class CourseRunDocument(BaseCourseDocument):
     card_image_url = fields.TextField()
     yt_video_url = fields.TextField()
     course_duration_override = fields.IntegerField()
-    course_difficulty = fields.TextField()
-    course_job_role = fields.TextField()
-    course_format = fields.TextField()
-    course_industry_certified_training = fields.TextField()
-    course_language = fields.TextField()
-    course_owner = fields.TextField()
+    course_difficulty = fields.KeywordField()
+    course_job_role = fields.KeywordField()
+    course_format = fields.KeywordField()
+    course_industry_certified_training = fields.KeywordField()
+    course_language = fields.KeywordField()
+    course_owner = fields.KeywordField()
     created = fields.DateField()
 
     def prepare_title_override(self, obj):
