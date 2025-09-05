@@ -26,7 +26,7 @@ synonym_text = analyzer(
 edge_ngram_completion_filter = token_filter(
     'edge_ngram_completion_filter',
     type="edge_ngram",
-    min_gram=2,
+    min_gram=1,
     max_gram=22
 )
 
