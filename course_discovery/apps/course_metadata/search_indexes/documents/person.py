@@ -3,6 +3,7 @@ from django_elasticsearch_dsl import Index, fields
 
 from course_discovery.apps.course_metadata.models import Person, Position
 
+from .analyzers import edge_ngram_completion, case_insensitive_keyword
 from .common import BaseDocument
 
 __all__ = ('PersonDocument',)
@@ -20,7 +21,12 @@ class PersonDocument(BaseDocument):
 
     bio = fields.TextField()
     bio_language = fields.TextField()
-    full_name = fields.TextField()
+    full_name = fields.TextField(
+        fields={
+            'edge_ngram_completion': fields.TextField(analyzer=edge_ngram_completion),
+            'lower': fields.TextField(analyzer=case_insensitive_keyword)
+        }
+    )
     get_profile_image_url = fields.TextField()
     organizations = fields.KeywordField(multi=True)
     position = fields.TextField(multi=True)
