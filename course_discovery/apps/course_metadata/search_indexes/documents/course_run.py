@@ -82,7 +82,67 @@ class CourseRunDocument(BaseCourseDocument):
         analyzer=html_strip, fields={'raw': fields.KeywordField(multi=True)}, multi=True
     )
     weeks_to_complete = fields.IntegerField()
+    title_override = fields.KeywordField()
+    featured = fields.BooleanField()
+    is_marketing_price_set = fields.BooleanField()
+    marketing_price_value = fields.TextField()
+    is_marketing_price_hidden = fields.BooleanField()
+    card_image_url = fields.TextField()
+    yt_video_url = fields.TextField()
+    course_duration_override = fields.IntegerField()
+    course_difficulty = fields.KeywordField()
+    course_job_role = fields.KeywordField()
+    course_format = fields.KeywordField()
+    course_industry_certified_training = fields.KeywordField()
+    course_language = fields.KeywordField()
+    course_owner = fields.KeywordField()
+    created = fields.DateField()
 
+    def prepare_title_override(self, obj):
+        return getattr(obj, 'title_override', None) or obj.title
+    
+    def prepare_featured(self, obj):
+        return getattr(obj, 'featured', None)
+    
+    def prepare_is_marketing_price_set(self, obj):
+        return getattr(obj, 'is_marketing_price_set', None)
+    
+    def prepare_marketing_price_value(self, obj):
+        return getattr(obj, 'marketing_price_value', None)
+    
+    def prepare_is_marketing_price_hidden(self, obj):
+        return getattr(obj, 'is_marketing_price_hidden', None)
+
+    def prepare_card_image_url(self, obj):
+        return obj.card_image_url
+
+    def prepare_yt_video_url(self, obj):
+        return getattr(obj, 'yt_video_url', None)
+    
+    def prepare_course_duration_override(self, obj):
+        return getattr(obj, 'course_duration_override', None)
+    
+    def prepare_course_difficulty(self, obj):
+        return getattr(obj, 'course_difficulty', None)
+    
+    def prepare_course_job_role(self, obj):
+        return getattr(obj, 'course_job_role', None)
+    
+    def prepare_course_format(self, obj):
+        return getattr(obj, 'course_format', None)
+    
+    def prepare_course_language(self, obj):
+        return getattr(obj, 'course_language', None)
+    
+    def prepare_course_owner(self, obj):
+        return getattr(obj, 'course_owner', None)
+    
+    def prepare_course_industry_certified_training(self, obj):
+        return getattr(obj, 'course_industry_certified_training', None)
+
+    def prepare_created(self, obj):
+        return getattr(obj, 'created', None)
+    
     def prepare_aggregation_key(self, obj):
         # Aggregate CourseRuns by Course key since that is how we plan to dedup CourseRuns on the marketing site.
         return 'courserun:{}'.format(obj.course.key)
