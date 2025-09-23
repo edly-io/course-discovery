@@ -702,6 +702,10 @@ class Subject(TranslatableModel, TimeStampedModel):
                          help_text=_('Leave this field blank to have the value generated automatically.'))
 
     partner = models.ForeignKey(Partner, models.CASCADE)
+    marketing_id = models.PositiveIntegerField(
+        null=True, blank=True, help_text=_('This field contains subject post ID from marketing site.')
+    )
+    marketing_url = models.URLField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -1073,6 +1077,13 @@ class Person(TimeStampedModel):
         help_text=_('A list of major works by this person. Must be valid HTML.'),
     )
     published = models.BooleanField(default=False)
+    designation = models.TextField(null=True, blank=True)
+    profile_image_url = models.URLField(null=True, blank=True)
+    marketing_id = models.PositiveIntegerField(null=True, blank=True, help_text=_('This field contains instructor post ID from wordpress.'))
+    marketing_url = models.URLField(null=True, blank=True)
+    phone_regex = RegexValidator(regex=r'^\+?1?\d*$', message="Phone number can only contain numbers.")
+    phone_number = models.CharField(validators=[phone_regex], null=True, blank=True, max_length=50)
+    website = models.URLField(null=True, blank=True)
 
     class Meta:
         unique_together = (
@@ -2398,6 +2409,20 @@ class CourseRun(ManageHistoryMixin, DraftModelMixin, CachedMixin, TimeStampedMod
         default=False,
         help_text=_('This calculated field signifies if this course run is in the enterprise subscription catalog'),
     )
+    invite_only = models.BooleanField(default=False)
+    featured = models.BooleanField(default=False)
+    is_marketing_price_set = models.BooleanField(
+        default=False,
+        verbose_name=_('Price'),
+        help_text=_( 'Indicates whether the course on marketing site is marked paid')
+    )
+    marketing_price_value = models.CharField(max_length=255, null=True, blank=True, verbose_name=_('Price Value'))
+    is_marketing_price_hidden = models.BooleanField(default=False, verbose_name=_('Hide Price'))
+    yt_video_url = models.CharField(max_length=255, null=True, blank=True, verbose_name=_('Youtube Video URL'))
+    course_duration_override = models.PositiveIntegerField(
+        null=True, blank=True, help_text=_('This field contains override course duration value.'),
+        verbose_name=_('Course Duration Override')
+    )
 
     variant_id = models.UUIDField(
         blank=True, null=True, editable=True,
@@ -2405,6 +2430,35 @@ class CourseRun(ManageHistoryMixin, DraftModelMixin, CachedMixin, TimeStampedMod
             'The identifier for a product variant. This is used to link a course run to a product variant for external '
             'LOBs (i.e; ExecEd & Bootcamps).'
         )
+    )
+    
+    course_duration_override = models.PositiveIntegerField(
+        null=True, blank=True, help_text=_('This field contains override course duration value.'),
+        verbose_name=_('Course Duration Override')
+    )
+    course_difficulty = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name=_("Course Difficulty")
+    )
+    course_job_role = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name=_("Course Job Roles")
+    )
+    course_format = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name=_("Course Format")
+    )
+    course_industry_certified_training = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=_("CourseIndustry Certified Training"),
+    )
+    course_owner = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name=_("Course Owner")
+    )
+    course_language = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=_("Language of the course run"),
     )
 
     fixed_price_usd = models.DecimalField(
@@ -3532,6 +3586,7 @@ class Program(ManageHistoryMixin, PkSearchableMixin, TimeStampedModel):
         default=None,
         related_name='program',
     )
+    featured = models.BooleanField(default=False)
     program_duration_override = models.CharField(
         help_text=_(
             'Useful field to overwrite the duration of a program. It can be a text describing a period of time, '
@@ -4616,10 +4671,26 @@ class PersonSocialNetwork(TimeStampedModel):
     FACEBOOK = 'facebook'
     TWITTER = 'twitter'
     BLOG = 'blog'
+    LINKEDIN = 'linkedin'
+    DRIBBBLE = 'dribbble'
+    YOUTUBE = 'youtube'
+    SKYPE = 'skype'
+    INSTAGRAM = 'instagram'
+    GITHUB = 'github'
+    STACKOVERFLOW = 'stackoverflow'
+    MEDIUM = 'medium'
     OTHERS = 'others'
 
     SOCIAL_NETWORK_CHOICES = {
         FACEBOOK: _('Facebook'),
+        LINKEDIN: _('LinkedIn'),
+        DRIBBBLE: _('Dribbble'),
+        YOUTUBE: _('Youtube'),
+        SKYPE: _('Skype'),
+        INSTAGRAM: _('Instagram'),
+        GITHUB: _('github'),
+        STACKOVERFLOW: _('stackoverflow'),
+        MEDIUM: _('medium'),
         TWITTER: _('Twitter'),
         BLOG: _('Blog'),
         OTHERS: _('Others'),
