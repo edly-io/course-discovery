@@ -11,7 +11,13 @@ logger = logging.getLogger(__name__)
 def _is_matching_run_type(run, run_type):
     run_seat_types = set(run.seats.values_list('type', flat=True))
     type_seat_types = set(run_type.tracks.values_list('seat_type__slug', flat=True))
-    return run_seat_types == type_seat_types
+    match = run_seat_types == type_seat_types
+    logger.info(
+        '[calculate_course_type] _is_matching_run_type: run_key=%s run_type_slug=%s '
+        'run_seat_types=%s type_seat_types=%s match=%s',
+        run.key, run_type.slug, run_seat_types, type_seat_types, match
+    )
+    return match
 
 
 def _do_entitlements_match(course, course_type):
@@ -21,6 +27,13 @@ def _do_entitlements_match(course, course_type):
     # Allow old courses without entitlements by checking if it has any first
     mismatched_entitlements = course_entitlement_modes and course_entitlement_modes != type_entitlement_modes
     mismatched_existing_course_type = not course.type.empty and course.type != course_type
+    logger.info(
+        '[calculate_course_type] _do_entitlements_match: course_key=%s course_type_slug=%s '
+        'course_entitlement_modes=%s type_entitlement_modes=%s '
+        'mismatched_entitlements=%s mismatched_existing_course_type=%s',
+        course.key, course_type.slug, course_entitlement_modes, type_entitlement_modes,
+        mismatched_entitlements, mismatched_existing_course_type
+    )
     if mismatched_entitlements or mismatched_existing_course_type:
         if mismatched_entitlements and not course.type.empty and course.type == course_type:
             logger.info(
@@ -28,6 +41,10 @@ def _do_entitlements_match(course, course_type):
                     type=course.type.name, key=course.key, id=course.id,
                 )
             )
+        logger.info(
+            '[calculate_course_type] _do_entitlements_match: FAILED for course_key=%s course_type_slug=%s',
+            course.key, course_type.slug
+        )
         return False
 
     return True
@@ -35,6 +52,10 @@ def _do_entitlements_match(course, course_type):
 
 def _match_course_type(course, course_type, commit=False, mismatches=None):
     matches = {}
+    logger.info(
+        '[calculate_course_type] _match_course_type: trying course_key=%s course_type_slug=%s',
+        course.key, course_type.slug
+    )
 
     # First, early exit if entitlements don't match.
     if not _do_entitlements_match(course, course_type):
@@ -43,6 +64,11 @@ def _match_course_type(course, course_type, commit=False, mismatches=None):
         matches[course] = course_type
 
     course_run_types = course_type.course_run_types.order_by('created')
+    logger.info(
+        '[calculate_course_type] _match_course_type: course_key=%s course_type_slug=%s '
+        'course_run_type_slugs=%s',
+        course.key, course_type.slug, [rt.slug for rt in course_run_types]
+    )
 
     if mismatches and course_type.slug in mismatches:
         # Using .order_by() here to reset the default ordering on these so we can eventually do the
@@ -55,6 +81,12 @@ def _match_course_type(course, course_type, commit=False, mismatches=None):
 
     # Now, let's look at seat types too. If any of our CourseRunType children match a run, we'll take it.
     for run in course.course_runs.order_by('key'):  # ordered just for visible message reliability
+        run_seat_slugs = list(run.seats.values_list('type', flat=True))
+        logger.info(
+            '[calculate_course_type] _match_course_type: checking run course_key=%s run_key=%s '
+            'run.type.empty=%s run_seat_slugs=%s',
+            course.key, run.key, run.type.empty, run_seat_slugs
+        )
         # Catch existing type data that doesn't match this attempted type
         if not run.type.empty and run.type not in course_run_types:
             logger.info(
@@ -71,6 +103,11 @@ def _match_course_type(course, course_type, commit=False, mismatches=None):
                 break
 
         if not match:
+            logger.info(
+                '[calculate_course_type] _match_course_type: NO matching CourseRunType for run_key=%s '
+                'course_type_slug=%s (tried run_types: %s)',
+                run.key, course_type.slug, [rt.slug for rt in (course_run_types if run.type.empty else [run.type])]
+            )
             if not run.type.empty:
                 logger.info(_("Existing run type {run_type} for {key} ({id}) doesn't match its own seats.").format(
                     run_type=run.type.name, key=run.key, id=run.id,
@@ -130,9 +167,23 @@ def calculate_course_type(course, course_types=None, commit=False, mismatches=No
     if not course_types:
         course_types = CourseType.objects.order_by('created')
 
+    course_type_slugs = [ct.slug for ct in course_types]
+    logger.info(
+        '[calculate_course_type] starting for course_key=%s (id=%s) course_types_to_try=%s',
+        course.key, course.id, course_type_slugs
+    )
+
     # Go through all types, and use the first one that matches. No sensible thing to do if multiple matched...
     for course_type in course_types:
         if _match_course_type(course, course_type, commit=commit, mismatches=mismatches):
+            logger.info(
+                '[calculate_course_type] SUCCESS for course_key=%s matched course_type_slug=%s',
+                course.key, course_type.slug
+            )
             return True
 
+    logger.info(
+        '[calculate_course_type] FAILED for course_key=%s: no CourseType matched (tried: %s)',
+        course.key, course_type_slugs
+    )
     return False
