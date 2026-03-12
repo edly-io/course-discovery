@@ -103,10 +103,15 @@ def _match_course_type(course, course_type, commit=False, mismatches=None):
                 break
 
         if not match:
+            run_types_tried = course_run_types if run.type.empty else [run.type]
+            run_type_expectations = [
+                (rt.slug, set(rt.tracks.values_list('seat_type__slug', flat=True)))
+                for rt in run_types_tried
+            ]
             logger.info(
                 '[calculate_course_type] _match_course_type: NO matching CourseRunType for run_key=%s '
-                'course_type_slug=%s (tried run_types: %s)',
-                run.key, course_type.slug, [rt.slug for rt in (course_run_types if run.type.empty else [run.type])]
+                'course_type_slug=%s run_seat_slugs=%s run_types_tried_with_expected_seats=%s',
+                run.key, course_type.slug, run_seat_slugs, run_type_expectations
             )
             if not run.type.empty:
                 logger.info(_("Existing run type {run_type} for {key} ({id}) doesn't match its own seats.").format(
