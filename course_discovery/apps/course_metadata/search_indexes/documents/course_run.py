@@ -97,6 +97,7 @@ class CourseRunDocument(BaseCourseDocument):
     course_language = fields.KeywordField()
     course_owner = fields.KeywordField()
     created = fields.DateField()
+    invite_only = fields.BooleanField()
 
     def prepare_title_override(self, obj):
         return getattr(obj, 'title_override', None) or obj.title
@@ -142,6 +143,9 @@ class CourseRunDocument(BaseCourseDocument):
 
     def prepare_created(self, obj):
         return getattr(obj, 'created', None)
+
+    def prepare_invite_only(self, obj):
+        return obj.invite_only
     
     def prepare_aggregation_key(self, obj):
         # Aggregate CourseRuns by Course key since that is how we plan to dedup CourseRuns on the marketing site.
